@@ -13,6 +13,7 @@ export interface RegoxConfig {
     port?: number
     goPort?: number
     proxy?: Record<string, unknown>
+    clientOnlyPackages?: string[]
   }
   openapi?: {
     spec?: string        // path to openapi.yaml, default: "openapi.yaml"
