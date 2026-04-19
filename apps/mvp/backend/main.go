@@ -3,10 +3,15 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/a-h/templ"
+	"regox.dev/mvp/generated"
+	"regox.dev/mvp/resolvers"
+	"regox.dev/mvp/templates"
 	server "regox.dev/server"
 )
 
@@ -17,20 +22,26 @@ func main() {
 	}
 	log.Printf("manifest loaded: %d pages", len(manifest.Pages))
 
-	mux := http.NewServeMux()
+	shell, err := os.ReadFile("../frontend/dist/index.html")
+	if err != nil {
+		log.Printf("warning: no CSR shell found: %v", err)
+		shell = []byte("<html><body><!-- CSR shell not built yet --></body></html>")
+	}
 
-	// Direct health check — verifies Go server is up and manifest loaded
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
-	})
+	r := server.NewRouter(manifest)
 
-	// Proxied through Vite /api/* — verifies Vite proxy works end-to-end
-	mux.HandleFunc("GET /api/status", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "via": "go"})
-	})
+	r.SSR("/product/{id}", func(ctx context.Context, data any) (templ.Component, error) {
+		d := data.(generated.ProductPageData)
+		return templates.ProductPage(d), nil
+	}, resolvers.ProductPage)
+
+	r.ISR("/shop", func(ctx context.Context, data any) (templ.Component, error) {
+		d := data.(generated.ShopPageData)
+		return templates.ShopPage(d), nil
+	}, resolvers.ShopPage)
+
+	r.CSR("/", string(shell))
 
 	log.Println("regox mvp listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Fatal(http.ListenAndServe(":8080", r))
 }

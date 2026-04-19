@@ -111,13 +111,15 @@ func (r *Router) Error(page PageFunc, resolver ErrorResolverFunc) {
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// Note: Go ServeMux returns empty pattern "" only when no route matches.
-	handler, pattern := r.mux.Handler(req)
-	if pattern != "" {
-		handler.ServeHTTP(w, req)
+	// Note: Go ServeMux sets path values (e.g. {id}) inside mux.ServeHTTP, not
+	// in the handler returned by mux.Handler. We use Handler only to check for a
+	// match, then delegate to mux.ServeHTTP so path values are properly set.
+	_, pattern := r.mux.Handler(req)
+	if pattern == "" {
+		r.serveNotFound(w, req)
 		return
 	}
-	r.serveNotFound(w, req)
+	r.mux.ServeHTTP(w, req)
 }
 
 func (r *Router) serveNotFound(w http.ResponseWriter, req *http.Request) {
