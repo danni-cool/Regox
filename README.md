@@ -45,22 +45,23 @@ Runtime:
 
 ### 2. OpenAPI as the single contract
 
-A single OpenAPI spec, generated from your Go backend, drives every consumer:
+A hand-authored OpenAPI spec is the single source of truth. It drives both sides simultaneously, so frontend and backend can develop in parallel from day one:
 
 ```
-                    [ OpenAPI Spec ]
-                           │
-              ┌────────────┴────────────┐
-              ↓                         ↓
-        Go structs                 TS types
-      (backend impl)           (frontend types)
-                                        │
-                                        ↓
-                                 Typed fetcher
-                               (frontend calls)
+              openapi.yaml  ← single source of truth
+                     │
+        ┌────────────┴────────────┐
+        ↓                         ↓
+  oapi-codegen              openapi-typescript
+  Go resolver interfaces    TS types + page data types
+  + schema structs          + dev mock JSON
+        │                         │
+        ↓                         ↓
+  backend impl              frontend pages
+  (implement interface)     (import generated types)
 ```
 
-Change a Go struct once, and your TypeScript types, API documentation, and test mocks all update in lockstep.
+Change the spec once, rerun `pnpm codegen`, and both sides report compile errors for anything that's out of sync.
 
 ### 3. Four rendering modes, chosen per page
 
@@ -88,18 +89,17 @@ The browser-side output is equivalent to what React 18's `renderToPipeableStream
 │                         Build time                               │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                   │
-│   frontend/pages/*.tsx ──┐                                       │
-│   frontend/islands/*.tsx ├──> Vite + Regox plugin                │
-│                          │                                         │
-│                          ├──> dist/templates/*.html (Go templates)│
-│                          ├──> dist/assets/*.js (hydration bundles)│
+│   openapi.yaml ──────────┬──> Go resolver interfaces (oapi-codegen)│
+│   (source of truth)      └──> TS types + mocks (openapi-typescript)│
+│                                                                     │
+│   frontend/pages/*.tsx ──> Vite + Regox plugin                   │
+│                          │                                          │
+│                          ├── Island auto-detection (AST analysis)  │
+│                          ├──> dist/templates/*.html (Go templates) │
+│                          ├──> dist/assets/islands/*.js (bundles)   │
 │                          └──> dist/manifest.json                   │
 │                                                                     │
-│   backend/**/*.go ───────┬──> Go compiler                         │
-│                          └──> OpenAPI spec (via Huma)             │
-│                                                                     │
-│   openapi.yaml ──────────┬──> Go structs (oapi-codegen)           │
-│                          └──> TS types (openapi-typescript)        │
+│   backend/**/*.go ───────> Go compiler                            │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────┘
 
@@ -133,81 +133,92 @@ The browser-side output is equivalent to what React 18's `renderToPipeableStream
 
 ```
 my-app/
+├── openapi.yaml                   # source of truth — write this first
+├── regox.config.ts                # build configuration
+│
 ├── frontend/
 │   ├── pages/
 │   │   └── product/
-│   │       └── [id].tsx           # React page component
-│   ├── islands/
-│   │   └── CartButton.tsx         # interactive component
-│   └── components/
-│       └── ...
+│   │       └── [id].tsx           # React page component (standard React, no annotations)
+│   ├── components/
+│   │   └── CartButton.tsx         # compiler auto-detects this as an Island
+│   └── generated/
+│       └── types.ts               # from openapi-typescript, do not edit
 │
 ├── backend/
 │   ├── resolvers/
-│   │   └── product.go             # page data resolvers
-│   ├── api/
-│   │   └── product.go             # REST API handlers
+│   │   └── product.go             # implements generated PageResolvers interface
+│   ├── generated/
+│   │   └── resolvers.gen.go       # from oapi-codegen, do not edit
 │   └── main.go
 │
-├── openapi.yaml                   # auto-generated, version-controlled
-├── regox.config.ts                # build configuration
 └── go.mod
 ```
 
 ### A page, end to end
 
-**1. Define the page in React**
+#### 1. Write the OpenAPI spec
+
+```yaml
+# openapi.yaml
+/internal/pages/product/{id}:
+  get:
+    operationId: GetProductPage
+    responses:
+      "200":
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductPageData"
+```
+
+Run `pnpm codegen` — TypeScript types and Go interfaces are generated automatically.
+
+#### 2. Define the page in React
 
 ```tsx
 // frontend/pages/product/[id].tsx
-import { StreamBoundary } from '@regox/react';
-import { CartButton } from '@/islands/CartButton';
-import type { ProductPageData } from '@/generated/types';
+import type { ProductPageData } from '@/generated/types'  // generated
+import { CartButton } from '@/components/CartButton'       // standard React component
+import type { RegoxPageConfig } from 'regox'
 
-export default function ProductPage({ product, reviews }: ProductPageData) {
+export const regox = { mode: 'ssr' } satisfies RegoxPageConfig
+
+export default function ProductPage({ product }: ProductPageData) {
   return (
-    <Layout>
+    <main>
       <h1>{product.title}</h1>
       <p>{product.description}</p>
+      {/* CartButton uses useState + onClick — compiler auto-extracts it as an Island */}
       <CartButton productId={product.id} price={product.price} />
-
-      <StreamBoundary slot="reviews" fallback={<ReviewsSkeleton />}>
-        <ReviewsList reviews={reviews} />
-      </StreamBoundary>
-    </Layout>
-  );
+    </main>
+  )
 }
 ```
 
-**2. Define the resolver in Go**
+#### 3. Implement the resolver in Go
 
 ```go
 // backend/resolvers/product.go
 package resolvers
 
-type ProductPageData struct {
-    Product ProductInfo   `json:"product"`
-    Reviews []Review      `json:"reviews" regox:"stream"` // streaming boundary
-}
+import (
+    "context"
+    gen "myapp/backend/generated" // generated by oapi-codegen
+)
 
-//regox:page /product/:id
-func ProductPage(ctx regox.Context, params ProductParams) (*ProductPageData, error) {
-    product, err := db.GetProduct(ctx, params.ID)
+type Resolvers struct{}
+
+func (r *Resolvers) GetProductPage(ctx context.Context, id string) (*gen.ProductPageData, error) {
+    product, err := db.GetProduct(ctx, id)
     if err != nil {
         return nil, err
     }
-
-    // Streaming fields resolve in parallel without blocking the shell
-    return &ProductPageData{
-        Product: product,
-        Reviews: regox.Async(func() []Review {
-            return db.GetReviews(ctx, params.ID)
-        }),
-    }, nil
+    return &gen.ProductPageData{Product: product}, nil
 }
 ```
 
-**3. Build output**
+#### 4. Build output
 
 ```
 dist/
@@ -222,7 +233,7 @@ dist/
 │   └── vendor.[hash].js
 ```
 
-**4. Runtime behavior**
+#### 5. Runtime behavior
 
 ```
 GET /product/abc123
@@ -257,26 +268,29 @@ GET /product/abc123
 ### Phase 0 — Design & prototyping (current)
 
 - [x] Architecture design and technology choices
-- [x] Core abstractions defined
+- [x] Core abstractions defined (routing, rendering modes, Island detection, state management)
+- [x] OpenAPI-first contract design and codegen pipeline
+- [x] Monorepo structure (`packages/vite-plugin`, `go/server`, `apps/mvp`)
 - [ ] Prototype validation of key technical risks
-  - [ ] React-to-Go-template compiler (sentinel-value approach)
+  - [ ] JSX → Go template compiler (sentinel-value + AST approach)
   - [ ] Out-of-order streaming in Go
-  - [ ] OpenAPI multi-target codegen pipeline
+  - [ ] Island auto-detection accuracy (transitive dependency analysis)
 
-### Phase 1 — MVP (goal: ship one working application)
+### Phase 1 — MVP (goal: ship one working application end-to-end)
 
-- [ ] Vite plugin: compile pages into Go templates
-- [ ] Go runtime: manifest loader, page resolver, template engine
-- [ ] Basic rendering modes: SSG, templated SSR, CSR
-- [ ] End-to-end OpenAPI contract (Go to TS)
-- [ ] Scaffolding: `regox create`, `regox scaffold page`
-- [ ] Dev mode: Vite HMR plus Go `air` integration
+- [ ] Vite plugin: JSX → Go template compiler for SSR/ISR pages
+- [ ] Vite plugin: Island auto-detection (hooks + event handlers) and bundle extraction
+- [ ] Vite plugin: manifest.json generation
+- [ ] Go runtime: manifest loader, page resolver wiring, template engine
+- [ ] Island hydration runtime (`regox-runtime.js`, target < 1 KB)
+- [ ] Dev mode: Vite mock fallback + Go `air` hot-reload + WebSocket state push
+- [ ] End-to-end demo: CSR + SSR + ISR pages with cross-Island state
 
-### Phase 2 — Streaming & islands
+### Phase 2 — Streaming & production hardening
 
 - [ ] `<StreamBoundary>` component and compiler support
-- [ ] Concurrent streaming in Go (goroutines plus channels)
-- [ ] Islands architecture: partial hydration, lazy loading
+- [ ] Concurrent streaming in Go (goroutines + channels)
+- [ ] ISR cache state machine: stale-while-revalidate, tag invalidation
 - [ ] Asset optimization: HTTP/2 push, 103 Early Hints
 
 ### Phase 3 — ISR & production hardening
