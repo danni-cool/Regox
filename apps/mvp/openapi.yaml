@@ -1,0 +1,109 @@
+openapi: 3.1.0
+info:
+  title: Regox MVP API
+  version: 0.0.1
+
+paths:
+  # ── Public API ────────────────────────────────────────────────────────────
+  /api/cart:
+    get:
+      operationId: GetCart
+      summary: Get the current user's cart
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+  # ── Internal page resolver endpoints ─────────────────────────────────────
+  # Not exposed to external traffic. Go server calls these internally to
+  # populate __REGOX_STATE__ and the SSR/ISR Go templates.
+  /internal/pages/product/{id}:
+    get:
+      operationId: GetProductPage
+      summary: Resolver data for the product detail page (SSR)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductPageData"
+
+  /internal/pages/shop:
+    get:
+      operationId: GetShopPage
+      summary: Resolver data for the shop listing page (ISR)
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShopPageData"
+
+components:
+  schemas:
+    Product:
+      type: object
+      required: [id, title, price, inStock]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        price:
+          type: number
+          format: float
+        inStock:
+          type: boolean
+
+    CartItem:
+      type: object
+      required: [productId, quantity, price]
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+          format: float
+
+    Cart:
+      type: object
+      required: [count, items]
+      properties:
+        count:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartItem"
+
+    ProductPageData:
+      type: object
+      required: [product]
+      properties:
+        product:
+          $ref: "#/components/schemas/Product"
+        resolverData:
+          type: object
+          description: Injected into __REGOX_STATE__ for Island hydration
+          properties:
+            cart:
+              $ref: "#/components/schemas/Cart"
+
+    ShopPageData:
+      type: object
+      required: [products]
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"

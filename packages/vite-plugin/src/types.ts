@@ -15,8 +15,9 @@ export interface RegoxConfig {
     proxy?: Record<string, unknown>
   }
   openapi?: {
-    spec?: string
+    spec?: string        // path to openapi.yaml, default: "openapi.yaml"
     generateTypes?: boolean
+    mocksDir?: string    // where mock JSON files live, default: "frontend/mocks"
   }
   export?: {
     ssgDir?: string

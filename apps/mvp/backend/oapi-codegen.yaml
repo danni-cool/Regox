@@ -1,0 +1,8 @@
+# oapi-codegen configuration for the Regox MVP backend.
+# Generates resolver interfaces + schema types from openapi.yaml.
+# Run via: go generate ./... (or pnpm codegen:go at repo root)
+package: generated
+generate:
+  models: true
+  strict-server: true
+output: generated/resolvers.gen.go

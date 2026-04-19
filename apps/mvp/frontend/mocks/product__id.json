@@ -1,0 +1,17 @@
+{
+  "product": {
+    "id": "prod-001",
+    "title": "Wireless Headphones",
+    "price": 99.99,
+    "inStock": true
+  },
+  "resolverData": {
+    "cart": {
+      "count": 2,
+      "items": [
+        { "productId": "prod-001", "quantity": 1, "price": 99.99 },
+        { "productId": "prod-002", "quantity": 1, "price": 49.99 }
+      ]
+    }
+  }
+}
