@@ -26,7 +26,7 @@ export function regox(config: RegoxConfig): Plugin {
 
       for (const page of pages) {
         const source = fs.readFileSync(page.filePath, 'utf-8')
-        const islandMap = detectIslands(source, page.filePath)
+        const islandMap = detectIslands(source, page.filePath, { config })
         islandMaps.set(page.route, islandMap)
       }
 
