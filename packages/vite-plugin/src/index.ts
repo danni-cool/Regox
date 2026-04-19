@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { Connect, Plugin } from 'vite'
-import type { RegoxConfig } from './types'
+import type { RegoxConfig } from './types.ts'
 
 export function regox(config: RegoxConfig): Plugin {
   return {
@@ -73,5 +73,5 @@ function resolvePageUrlToMockPath(url: string, config: RegoxConfig): string | nu
   return path.join(process.cwd(), mocksDir, mockName)
 }
 
-export { defineConfig } from './define-config'
+export { defineConfig } from './define-config.ts'
 export type { RegoxConfig }

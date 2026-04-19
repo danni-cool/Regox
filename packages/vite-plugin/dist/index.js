@@ -61,4 +61,4 @@ function resolvePageUrlToMockPath(url, config) {
     const mockName = normalized.replace(/\//g, '__').replace(/__id__/, '__id') + '.json';
     return path.join(process.cwd(), mocksDir, mockName);
 }
-export { defineConfig } from './define-config';
+export { defineConfig } from "./define-config.js";
