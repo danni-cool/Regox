@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { parseRegoxState, countIslandMounts } from '../regox-runtime'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { parseRegoxState, countIslandMounts, mountIslands } from '../regox-runtime'
 
 beforeEach(() => {
   document.body.innerHTML = ''
@@ -42,5 +42,40 @@ describe('countIslandMounts', () => {
       <div data-island="Header" data-props="{}"></div>
     `
     expect(countIslandMounts()).toBe(2)
+  })
+})
+
+describe('mountIslands', () => {
+  it('calls registry and mounts component on data-island element', () => {
+    document.body.innerHTML = `
+      <div data-island="Counter" data-props='{"count":5}'></div>
+    `
+    const mounted: Array<{ name: string; props: Record<string, unknown> }> = []
+    const registry = {
+      Counter: (props: Record<string, unknown>) => {
+        mounted.push({ name: 'Counter', props })
+        return null
+      },
+    }
+    mountIslands(registry)
+    expect(mounted).toHaveLength(1)
+    expect(mounted[0].name).toBe('Counter')
+    expect(mounted[0].props.count).toBe(5)
+  })
+
+  it('warns and skips unknown island names', () => {
+    document.body.innerHTML = `<div data-island="Unknown" data-props='{}'></div>`
+    const warned: string[] = []
+    vi.spyOn(console, 'warn').mockImplementation((msg: string) => warned.push(msg))
+    mountIslands({})
+    expect(warned.some(m => m.includes('Unknown'))).toBe(true)
+    vi.restoreAllMocks()
+  })
+
+  it('handles missing data-props gracefully', () => {
+    document.body.innerHTML = `<div data-island="Box"></div>`
+    const mounted: string[] = []
+    mountIslands({ Box: () => { mounted.push('Box'); return null } })
+    expect(mounted).toHaveLength(1)
   })
 })
