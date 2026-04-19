@@ -3,8 +3,10 @@ import * as t from '@babel/types'
 import type { IslandMap, IslandMeta, CompileOptions } from './types.ts'
 
 export class CompileError extends Error {
-  constructor(message: string, public filePath?: string) {
+  filePath?: string
+  constructor(message: string, filePath?: string) {
     super(message)
+    this.filePath = filePath
   }
 }
 

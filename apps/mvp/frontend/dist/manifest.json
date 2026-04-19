@@ -1,8 +1,18 @@
 {
   "pages": {
-    "/": { "mode": "csr", "islands": [] },
-    "/shop": { "mode": "csr", "islands": [] },
-    "/product/[id]": { "mode": "csr", "islands": [] }
+    "/": {
+      "mode": "csr",
+      "islands": []
+    },
+    "/product/[id]": {
+      "mode": "ssr",
+      "islands": []
+    },
+    "/shop": {
+      "mode": "isr",
+      "islands": [],
+      "revalidate": 300
+    }
   },
   "islandChunks": {}
 }
