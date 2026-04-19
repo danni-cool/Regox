@@ -82,8 +82,14 @@ export function detectIslands(
     islands.set(componentName, meta)
 
     if (process.env.NODE_ENV !== 'test') {
-      console.log(`[regox] ${componentName} → Island`)
-      console.log(`  reason: ${reason.join(', ')}`)
+      console.log(`[regox] ✓ ${componentName} → Island (${reason.join(', ')})`)
+      // T3=A: warn on call-expression props
+      for (const prop of props) {
+        if (prop.expression === 'call-expression') {
+          console.warn(`[regox] ⚠ ${componentName}.${prop.name} → call-expression (will be empty in SSR output)`)
+          console.warn(`  💡 Pre-compute in resolver and pass as a plain value`)
+        }
+      }
     }
 
     return 'skip'
