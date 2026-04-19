@@ -42,7 +42,7 @@ describe('serializeProps', () => {
     const { attrs, paramNames } = parseJSXAttr('productId={product.id}')
     const props = serializeProps(attrs, paramNames)
     expect(props).toEqual([
-      { name: 'productId', type: 'string', expression: 'field-access', value: 'data.Product.Id' },
+      { name: 'productId', type: 'string', expression: 'field-access', value: 'data.Product.ID' },
     ])
   })
 
@@ -52,7 +52,7 @@ describe('serializeProps', () => {
     expect(props[0]).toMatchObject({
       name: 'city',
       expression: 'field-access',
-      value: 'data.Product.Vendor.City',
+      value: 'data.Product.Vendor.City', // 'city' is not an initialism
     })
   })
 

@@ -93,6 +93,13 @@ function flattenMember(expr: t.MemberExpression): string[] | null {
   return parts
 }
 
+// Common Go initialisms: these are all-caps in Go struct field names
+const GO_INITIALISMS = new Set([
+  'id', 'url', 'uri', 'api', 'html', 'json', 'xml', 'sql', 'http', 'https',
+  'uuid', 'uid', 'ip', 'tcp', 'udp', 'rpc', 'eof', 'cpu', 'ram', 'acl',
+])
+
 function capitalize(s: string): string {
+  if (GO_INITIALISMS.has(s.toLowerCase())) return s.toUpperCase()
   return s.charAt(0).toUpperCase() + s.slice(1)
 }

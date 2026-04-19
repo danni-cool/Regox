@@ -195,7 +195,7 @@ describe('Island component substitution', () => {
     const { templ } = compile(src, islandMap)
     expect(templ).toContain('data-island="CartButton"')
     expect(templ).toContain('data-props=')
-    expect(templ).toContain('"productId": data.Product.Id')
+    expect(templ).toContain('"productId": data.Product.Id') // uses IslandMeta.props.value directly
     expect(templ).not.toContain('@CartButton')
   })
 

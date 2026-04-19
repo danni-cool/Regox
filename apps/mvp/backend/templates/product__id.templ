@@ -16,5 +16,11 @@ templ ProductPage(data generated.ProductPageData) {
     } else {
       <span>Out of Stock</span>
     }
+    <div
+      data-island="CartButton"
+      data-props={ templ.JSONString(map[string]any{
+        "productId": data.Product.ID,
+      }) }
+    ></div>
   </main>
 }

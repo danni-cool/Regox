@@ -6,7 +6,9 @@
     },
     "/product/[id]": {
       "mode": "ssr",
-      "islands": []
+      "islands": [
+        "CartButton"
+      ]
     },
     "/shop": {
       "mode": "isr",

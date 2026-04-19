@@ -256,7 +256,7 @@ describe('detectIslands — props serialization', () => {
     expect(meta.props[0]).toMatchObject({
       name: 'productId',
       expression: 'field-access',
-      value: 'data.Product.Id',
+      value: 'data.Product.ID',
     })
   })
 
