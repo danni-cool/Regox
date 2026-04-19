@@ -1,0 +1,8 @@
+{
+  "pages": {
+    "/": { "mode": "csr", "islands": [] },
+    "/shop": { "mode": "csr", "islands": [] },
+    "/product/[id]": { "mode": "csr", "islands": [] }
+  },
+  "islandChunks": {}
+}
