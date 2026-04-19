@@ -1,4 +1,4 @@
-import { defineConfig } from '@regox/core'
+import { defineConfig } from '@regox/vite-plugin'
 
 // Design draft — API will evolve during implementation.
 

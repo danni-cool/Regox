@@ -73,4 +73,5 @@ function resolvePageUrlToMockPath(url: string, config: RegoxConfig): string | nu
   return path.join(process.cwd(), mocksDir, mockName)
 }
 
+export { defineConfig } from './define-config'
 export type { RegoxConfig }
