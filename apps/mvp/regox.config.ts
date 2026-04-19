@@ -11,12 +11,15 @@ export default defineConfig({
 
     ssg: {
       // 'embed'    → SSG files are embedded into the Go binary via go:embed
-      // 'external' → Go server redirects SSG routes (301) to cdnBaseUrl; no static files embedded
+      // 'external' → Go server redirects SSG routes (301) to the CDN; no static files embedded
       output: 'embed',
-
-      // Required when output is 'external'. Root URL where SSG files are served after upload.
-      // cdnBaseUrl: 'https://cdn.example.com',
     },
+
+    // CDN base URL for all assets (JS bundles, CSS, images).
+    // Set via environment variable at build time — baked into manifest.json by Vite.
+    // Go server reads URLs from manifest as-is; no runtime CDN logic needed.
+    // Usage: REGOX_CDN_URL=https://cdn.example.com pnpm build
+    // cdnUrl: process.env.REGOX_CDN_URL,
   },
 
   // ─── Routing ───────────────────────────────────────────────────────────────
