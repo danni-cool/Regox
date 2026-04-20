@@ -1,28 +1,26 @@
 openapi: 3.1.0
 info:
   title: Regox MVP API
-  version: 0.0.1
+  version: 0.1.0
 
 paths:
-  # ── Public API ────────────────────────────────────────────────────────────
-  /api/cart:
+  /api/products:
     get:
-      operationId: GetCart
-      summary: Get the current user's cart
+      operationId: ListProducts
+      summary: List all products
       responses:
         "200":
+          description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Cart"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
 
-  # ── Internal page resolver endpoints ─────────────────────────────────────
-  # Not exposed to external traffic. Go server calls these internally to
-  # populate __REGOX_STATE__ and the SSR/ISR Go templates.
-  /internal/pages/product/{id}:
+  /api/products/{id}:
     get:
-      operationId: GetProductPage
-      summary: Resolver data for the product detail page (SSR)
+      operationId: GetProduct
       parameters:
         - name: id
           in: path
@@ -31,75 +29,320 @@ paths:
             type: string
       responses:
         "200":
+          description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProductPageData"
+                $ref: "#/components/schemas/Product"
 
-  /internal/pages/shop:
+  /api/products/{id}/reviews:
     get:
-      operationId: GetShopPage
-      summary: Resolver data for the shop listing page (ISR)
+      operationId: ListReviews
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
+          description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ShopPageData"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+
+  /api/news:
+    get:
+      operationId: ListNews
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsItem"
+
+  /api/news/{id}:
+    get:
+      operationId: GetNews
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsItem"
+
+  /api/cart:
+    get:
+      operationId: GetCart
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+  /api/cart/items:
+    post:
+      operationId: AddCartItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCartItemRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+  /api/cart/items/{productId}:
+    put:
+      operationId: UpdateCartItem
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCartItemRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+    delete:
+      operationId: DeleteCartItem
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+  /api/orders:
+    post:
+      operationId: CreateOrder
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResult"
+
+  /internal/pages/home:
+    get:
+      operationId: GetHomePage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HomePageData"
+
+  /internal/pages/products:
+    get:
+      operationId: GetProductsPage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductsPageData"
+
+  /internal/pages/products/{id}:
+    get:
+      operationId: GetProductDetailPage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductDetailPageData"
+
+  /internal/pages/news:
+    get:
+      operationId: GetNewsPage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsPageData"
+
+  /internal/pages/news/{id}:
+    get:
+      operationId: GetNewsDetailPage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsDetailPageData"
 
 components:
   schemas:
     Product:
       type: object
-      required: [id, title, price, inStock]
+      required: [id, name, price, description, imageURL, category, stock]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+        description:
+          type: string
+        imageURL:
+          type: string
+        category:
+          type: string
+        stock:
+          type: integer
+
+    Review:
+      type: object
+      required: [id, productID, author, rating, body, createdAt]
+      properties:
+        id:
+          type: string
+        productID:
+          type: string
+        author:
+          type: string
+        rating:
+          type: integer
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    NewsItem:
+      type: object
+      required: [id, title, summary, body, publishedAt]
       properties:
         id:
           type: string
         title:
           type: string
-        price:
-          type: number
-          format: float
-        inStock:
-          type: boolean
+        summary:
+          type: string
+        body:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
 
     CartItem:
       type: object
-      required: [productId, quantity, price]
+      required: [productID, quantity]
       properties:
-        productId:
+        productID:
           type: string
         quantity:
           type: integer
-        price:
-          type: number
-          format: float
 
     Cart:
       type: object
-      required: [count, items]
+      required: [sessionID, items]
       properties:
-        count:
-          type: integer
+        sessionID:
+          type: string
         items:
           type: array
           items:
             $ref: "#/components/schemas/CartItem"
 
-    ProductPageData:
+    AddCartItemRequest:
       type: object
-      required: [product]
+      required: [productID, quantity]
       properties:
-        product:
-          $ref: "#/components/schemas/Product"
-        resolverData:
-          type: object
-          description: Injected into __REGOX_STATE__ for Island hydration
-          properties:
-            cart:
-              $ref: "#/components/schemas/Cart"
+        productID:
+          type: string
+        quantity:
+          type: integer
 
-    ShopPageData:
+    UpdateCartItemRequest:
+      type: object
+      required: [quantity]
+      properties:
+        quantity:
+          type: integer
+
+    OrderResult:
+      type: object
+      required: [orderId, status]
+      properties:
+        orderId:
+          type: string
+        status:
+          type: string
+
+    HomePageData:
+      type: object
+      required: [featuredProducts, latestNews]
+      properties:
+        featuredProducts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        latestNews:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsItem"
+
+    ProductsPageData:
       type: object
       required: [products]
       properties:
@@ -107,3 +350,26 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Product"
+
+    ProductDetailPageData:
+      type: object
+      required: [product]
+      properties:
+        product:
+          $ref: "#/components/schemas/Product"
+
+    NewsPageData:
+      type: object
+      required: [news]
+      properties:
+        news:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsItem"
+
+    NewsDetailPageData:
+      type: object
+      required: [newsItem]
+      properties:
+        newsItem:
+          $ref: "#/components/schemas/NewsItem"
