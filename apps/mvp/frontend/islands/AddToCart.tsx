@@ -22,7 +22,7 @@ export default function AddToCart({ productId, productName, price }: AddToCartPr
     if (isPosting) return
     setIsPosting(true)
     try {
-      addItem(productId, qty)
+      addItem(productId, qty, productName, price)
       emit({ productId, quantity: qty, productName })
       await fetch('/api/cart/items', {
         method: 'POST',

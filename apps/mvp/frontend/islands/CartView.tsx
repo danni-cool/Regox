@@ -57,7 +57,7 @@ export default function CartView() {
     )
   }
 
-  const total = items.reduce((sum, item) => sum + ((item as any).price ?? 0) * item.quantity, 0)
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
   return (
     <Card className="max-w-2xl mx-auto mt-8">
@@ -73,17 +73,13 @@ export default function CartView() {
             {i > 0 && <Separator className="mb-4" />}
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">{(item as any).name ?? item.productId}</p>
+                <p className="font-medium">{item.name}</p>
                 <p className="text-sm text-muted-foreground">
-                  {(item as any).price != null
-                    ? `$${(item as any).price.toFixed(2)} × ${item.quantity}`
-                    : `Qty: ${item.quantity}`}
+                  ${item.price.toFixed(2)} × {item.quantity}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                {(item as any).price != null && (
-                  <span className="font-semibold">${((item as any).price * item.quantity).toFixed(2)}</span>
-                )}
+                <span className="font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
                 <Button
                   variant="ghost"
                   size="sm"

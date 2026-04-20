@@ -3,13 +3,15 @@ import { persist } from 'zustand/middleware'
 
 interface CartItemState {
   productId: string
+  name: string
+  price: number
   quantity: number
 }
 
 interface CartState {
   items: CartItemState[]
   totalCount: number
-  addItem: (productId: string, quantity: number) => void
+  addItem: (productId: string, quantity: number, name: string, price: number) => void
   removeItem: (productId: string) => void
   updateItem: (productId: string, quantity: number) => void
   clearCart: () => void
@@ -22,11 +24,11 @@ export const useCartStore = create<CartState>()(
       items: [],
       totalCount: 0,
 
-      addItem: (productId, quantity) => set(state => {
+      addItem: (productId, quantity, name, price) => set(state => {
         const existing = state.items.find(i => i.productId === productId)
         const items = existing
           ? state.items.map(i => i.productId === productId ? { ...i, quantity: i.quantity + quantity } : i)
-          : [...state.items, { productId, quantity }]
+          : [...state.items, { productId, name, price, quantity }]
         return { items, totalCount: items.reduce((sum, i) => sum + i.quantity, 0) }
       }),
 
