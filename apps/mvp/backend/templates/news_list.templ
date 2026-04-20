@@ -1,0 +1,23 @@
+package templates
+
+import (
+	"regox.dev/mvp/generated"
+)
+
+templ NewsListPage(data generated.NewsPageData) {
+	<main class="max-w-3xl mx-auto p-6">
+		<h1 class="text-3xl font-bold mb-6">News</h1>
+		<div class="space-y-6">
+			for _, item := range data.News {
+				<article class="border rounded-lg p-5 hover:shadow transition">
+					<a href={ templ.SafeURL("/news/" + item.Id) }>
+						<h2 class="text-xl font-semibold hover:text-blue-600">{ item.Title }</h2>
+					</a>
+					<p class="text-gray-500 text-sm mt-1">{ item.PublishedAt.Format("2 Jan 2006") }</p>
+					<p class="text-gray-700 mt-2">{ item.Summary }</p>
+				</article>
+			}
+		</div>
+		<div data-island="CartBadge"></div>
+	</main>
+}

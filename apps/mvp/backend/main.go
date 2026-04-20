@@ -67,6 +67,16 @@ func main() {
 		return templates.ProductDetailPage(d), nil
 	}, resolvers.NewProductDetail(s))
 
+	r.ISR("/news", func(ctx context.Context, data any) (templ.Component, error) {
+		d := data.(generated.NewsPageData)
+		return templates.NewsListPage(d), nil
+	}, resolvers.NewNewsList(s))
+
+	r.ISR("/news/{id}", func(ctx context.Context, data any) (templ.Component, error) {
+		d := data.(generated.NewsDetailPageData)
+		return templates.NewsDetailPage(d), nil
+	}, resolvers.NewNewsDetail(s))
+
 	r.CSR("/cart", string(shell))
 
 	r.NotFound(func(ctx context.Context, data any) (templ.Component, error) {
