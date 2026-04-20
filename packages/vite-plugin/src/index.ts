@@ -238,9 +238,10 @@ export function regox(config: RegoxConfig): Plugin {
       const goModule = readGoModule(path.resolve('.'))
       const goRoutesDir = path.resolve('backend/regoxroutes')
       writeGoRoutes(pendingManifest.pages, goRoutesDir, 'regoxroutes', goModule ? { goModule } : undefined)
+      const backendTemplatesDir = path.resolve('backend/templates')
       const layoutPath = path.join(path.resolve('frontend/pages'), '_layout.tsx')
       if (fs.existsSync(layoutPath)) {
-        writeGoLayout(layoutPath, goRoutesDir)
+        writeGoLayout(layoutPath, backendTemplatesDir)
       }
       console.log(`[regox] manifest written: frontend/dist/manifest.json (${pendingManifest.pages.length} pages, ${Object.keys(islandChunks).length} island chunks)`)
       console.log(`[regox] routes written: backend/regoxroutes/routes.go${goModule ? ` (module: ${goModule})` : ''}`)
