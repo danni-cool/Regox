@@ -50,6 +50,7 @@ export function compileLayout(src: string): string {
 export function writeGoLayout(layoutPath: string, outDir: string): void {
   const src = fs.readFileSync(layoutPath, 'utf-8')
   const output = compileLayout(src)
+  fs.mkdirSync(outDir, { recursive: true })
   const outPath = path.join(outDir, 'Layout.templ')
   fs.writeFileSync(outPath, output, 'utf-8')
 }
