@@ -1,0 +1,36 @@
+package templates
+
+import (
+	"fmt"
+	"regox.dev/mvp/generated"
+)
+
+templ HomePage(data generated.HomePageData) {
+	<main class="max-w-4xl mx-auto p-6">
+		<h1 class="text-3xl font-bold mb-8">Welcome to Regox Shop</h1>
+		<section class="mb-12">
+			<h2 class="text-2xl font-semibold mb-4">Featured Products</h2>
+			<div class="grid grid-cols-3 gap-4">
+				for _, p := range data.FeaturedProducts {
+					<a href={ templ.SafeURL("/products/" + p.Id) } class="block border rounded-lg p-4 hover:shadow-md transition">
+						<img src={ p.ImageURL } alt={ p.Name } class="w-full h-40 object-cover rounded mb-2"/>
+						<h3 class="font-medium">{ p.Name }</h3>
+						<p class="text-gray-600">${ fmt.Sprintf("%.2f", float64(p.Price)) }</p>
+					</a>
+				}
+			</div>
+		</section>
+		<section>
+			<h2 class="text-2xl font-semibold mb-4">Latest News</h2>
+			<div class="space-y-4">
+				for _, n := range data.LatestNews {
+					<a href={ templ.SafeURL("/news/" + n.Id) } class="block border rounded-lg p-4 hover:shadow-md transition">
+						<h3 class="font-medium">{ n.Title }</h3>
+						<p class="text-gray-600 text-sm mt-1">{ n.Summary }</p>
+					</a>
+				}
+			</div>
+		</section>
+		<div data-island="CartBadge"></div>
+	</main>
+}

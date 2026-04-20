@@ -9,8 +9,6 @@ import (
 	"os"
 
 	"github.com/a-h/templ"
-	"regox.dev/mvp/generated"
-	"regox.dev/mvp/resolvers"
 	"regox.dev/mvp/templates"
 	server "regox.dev/server"
 )
@@ -37,16 +35,7 @@ func main() {
 	assetsFS := http.FileServer(http.Dir("../frontend/dist/assets"))
 	r.Static("/assets/", assetsFS)
 
-	r.SSR("/product/{id}", func(ctx context.Context, data any) (templ.Component, error) {
-		d := data.(generated.ProductPageData)
-		return templates.ProductPage(d), nil
-	}, resolvers.ProductPage)
-
-	r.ISR("/shop", func(ctx context.Context, data any) (templ.Component, error) {
-		d := data.(generated.ShopPageData)
-		return templates.ShopPage(d), nil
-	}, resolvers.ShopPage)
-
+	// TODO(Task 8): replace with M5 routes (homepage, /products, /products/{id}, /news, /news/{id}, /cart + API)
 	r.CSR("/", string(shell))
 
 	r.NotFound(func(ctx context.Context, data any) (templ.Component, error) {
