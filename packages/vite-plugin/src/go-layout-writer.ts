@@ -9,7 +9,12 @@ import type {
   JSXExpressionContainer,
   StringLiteral,
   TemplateLiteral,
+  FunctionDeclaration,
+  ArrowFunctionExpression,
+  FunctionExpression,
 } from '@babel/types'
+
+type FnNode = FunctionDeclaration | ArrowFunctionExpression | FunctionExpression
 
 export function compileLayout(src: string): string {
   const ast = parser.parse(src, {
@@ -49,7 +54,7 @@ export function writeGoLayout(layoutPath: string, outDir: string): void {
   fs.writeFileSync(outPath, output, 'utf-8')
 }
 
-function extractReturn(fn: any): JSXElement | JSXFragment | null {
+function extractReturn(fn: FnNode): JSXElement | JSXFragment | null {
   const body = fn.body
   if (!body) return null
   if (body.type === 'JSXElement' || body.type === 'JSXFragment') return body
@@ -79,7 +84,6 @@ function emitJsx(node: JSXElement | JSXFragment, lines: string[], depth: number)
   const opening = node.openingElement
   const tagName = getTagName(opening)
 
-  if (!tagName) return
   if (tagName === '!DOCTYPE') return
 
   // PascalCase = Island mount
@@ -138,16 +142,22 @@ function emitChild(child: JSXChild, lines: string[], depth: number): void {
         } else {
           lines.push(`${indent(depth)}{ ${expr.name} }`)
         }
+      } else {
+        throw new Error(
+          `go-layout-writer: unsupported JSX expression type "${expr.type}" — only plain identifiers are supported in _layout.tsx`
+        )
       }
       break
     }
   }
 }
 
-function getTagName(opening: JSXOpeningElement): string | null {
+function getTagName(opening: JSXOpeningElement): string {
   const name = opening.name
   if (name.type === 'JSXIdentifier') return name.name
-  return null
+  throw new Error(
+    `go-layout-writer: JSXMemberExpression tags (e.g. "React.StrictMode") are not supported in _layout.tsx`
+  )
 }
 
 function emitAttributes(opening: JSXOpeningElement): string {
@@ -205,7 +215,12 @@ function extractDangerouslySetInnerHTML(opening: JSXOpeningElement): string | nu
     if (expr.type !== 'ObjectExpression') continue
     for (const prop of expr.properties) {
       if (prop.type !== 'ObjectProperty') continue
-      const key = (prop.key as any).name ?? (prop.key as any).value
+      const key =
+        prop.key.type === 'Identifier'
+          ? (prop.key as import('@babel/types').Identifier).name
+          : prop.key.type === 'StringLiteral'
+            ? (prop.key as StringLiteral).value
+            : null
       if (key !== '__html') continue
       const val = prop.value
       if (val.type === 'StringLiteral') return val.value

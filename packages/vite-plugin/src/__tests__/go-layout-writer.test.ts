@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { compileLayout } from '../go-layout-writer.ts'
-import { writeGoLayout } from '../go-layout-writer.ts'
+import { compileLayout, writeGoLayout } from '../go-layout-writer.ts'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -149,7 +148,8 @@ export default function Layout({ children }) {
 describe('writeGoLayout', () => {
   it('writes Layout.templ to outDir', () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'regox-test-'))
-    const layoutSrc = `
+    try {
+      const layoutSrc = `
 export default function Layout({ children, title = 'App', stylesheet = '' }) {
   return (
     <html lang="en">
@@ -162,16 +162,17 @@ export default function Layout({ children, title = 'App', stylesheet = '' }) {
   )
 }
 `
-    const layoutPath = path.join(tmpDir, '_layout.tsx')
-    fs.writeFileSync(layoutPath, layoutSrc)
+      const layoutPath = path.join(tmpDir, '_layout.tsx')
+      fs.writeFileSync(layoutPath, layoutSrc)
 
-    writeGoLayout(layoutPath, tmpDir)
+      writeGoLayout(layoutPath, tmpDir)
 
-    const out = fs.readFileSync(path.join(tmpDir, 'Layout.templ'), 'utf-8')
-    expect(out).toContain('package templates')
-    expect(out).toContain('templ Layout(title string, stylesheet string)')
-    expect(out).toContain('{ children... }')
-
-    fs.rmSync(tmpDir, { recursive: true })
+      const out = fs.readFileSync(path.join(tmpDir, 'Layout.templ'), 'utf-8')
+      expect(out).toContain('package templates')
+      expect(out).toContain('templ Layout(title string, stylesheet string)')
+      expect(out).toContain('{ children... }')
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true })
+    }
   })
 })
