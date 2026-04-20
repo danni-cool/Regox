@@ -10,11 +10,25 @@ import (
 	"github.com/a-h/templ"
 	"regox.dev/mvp/api"
 	"regox.dev/mvp/generated"
+	"regox.dev/mvp/regoxroutes"
 	"regox.dev/mvp/resolvers"
 	"regox.dev/mvp/store"
 	"regox.dev/mvp/templates"
 	server "regox.dev/server"
 )
+
+// appResolvers implements regoxroutes.PageResolvers.
+type appResolvers struct{ store *store.Store }
+
+func (a *appResolvers) HomePage(ctx context.Context, req *http.Request) (any, error) {
+	return resolvers.NewHomePage(a.store)(ctx, req)
+}
+func (a *appResolvers) ProductsPage(ctx context.Context, req *http.Request) (any, error) {
+	return resolvers.NewProductList(a.store)(ctx, req)
+}
+func (a *appResolvers) ProductDetailPage(ctx context.Context, req *http.Request) (any, error) {
+	return resolvers.NewProductDetail(a.store)(ctx, req)
+}
 
 func main() {
 	s := store.New()
@@ -44,22 +58,13 @@ func main() {
 	api.RegisterNewsAPIHandler(apiMux, s)
 	r.Mount("/api/", apiMux)
 
-	// Pages — Batch 1
-	r.SSR("/", func(ctx context.Context, data any) (templ.Component, error) {
-		d := data.(generated.HomePageData)
-		return templates.HomePage(d), nil
-	}, resolvers.NewHomePage(s))
+	// All React-backed pages auto-registered from generated route table.
+	// CSR → static HTML shell; SSR/ISR → appResolvers provides data.
+	if err := regoxroutes.RegisterRoutes(r, &appResolvers{store: s}); err != nil {
+		log.Fatalf("failed to register routes: %v", err)
+	}
 
-	r.ISR("/products", func(ctx context.Context, data any) (templ.Component, error) {
-		d := data.(generated.ProductsPageData)
-		return templates.ProductListPage(d), nil
-	}, resolvers.NewProductList(s))
-
-	r.SSR("/products/{id}", func(ctx context.Context, data any) (templ.Component, error) {
-		d := data.(generated.ProductDetailPageData)
-		return templates.ProductDetailPage(d), nil
-	}, resolvers.NewProductDetail(s))
-
+	// Go-only pages (no React page file) — registered manually.
 	r.ISR("/news", func(ctx context.Context, data any) (templ.Component, error) {
 		d := data.(generated.NewsPageData)
 		return templates.NewsListPage(d), nil
@@ -69,12 +74,6 @@ func main() {
 		d := data.(generated.NewsDetailPageData)
 		return templates.NewsDetailPage(d), nil
 	}, resolvers.NewNewsDetail(s))
-
-	r.SSR("/cart", func(ctx context.Context, data any) (templ.Component, error) {
-		return templates.CartPage(), nil
-	}, func(ctx context.Context, req *http.Request) (any, error) {
-		return struct{}{}, nil
-	})
 
 	r.NotFound(func(ctx context.Context, data any) (templ.Component, error) {
 		return templates.NotFound(), nil

@@ -176,6 +176,99 @@ func TestRouter_SSR_TitlerInterface_InjectsTitle(t *testing.T) {
 	}
 }
 
+func TestManifestRouteToGoPattern(t *testing.T) {
+	cases := []struct {
+		in  string
+		out string
+	}{
+		{"/", "/"},
+		{"/cart", "/cart"},
+		{"/products/[id]", "/products/{id}"},
+		{"/news/[slug]/comments/[cid]", "/news/{slug}/comments/{cid}"},
+	}
+	for _, c := range cases {
+		got := server.ManifestRouteToGoPattern(c.in)
+		if got != c.out {
+			t.Errorf("ManifestRouteToGoPattern(%q) = %q, want %q", c.in, got, c.out)
+		}
+	}
+}
+
+func TestRouter_AutoRegisterCSR_RegistersCSRPages(t *testing.T) {
+	m := makeManifest(map[string]server.PageEntry{
+		"/cart":     {Mode: "csr"},
+		"/products": {Mode: "isr"},
+		"/":         {Mode: "ssr"},
+	})
+	router := server.NewRouter(m)
+	router.SetLayout(layoutWithTitle)
+
+	if err := router.AutoRegisterCSR(); err != nil {
+		t.Fatalf("AutoRegisterCSR: %v", err)
+	}
+
+	// CSR route registered → 200
+	req := httptest.NewRequest("GET", "/cart", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200 for CSR /cart, got %d", w.Code)
+	}
+	// ISR/SSR routes not auto-registered → 404
+	req2 := httptest.NewRequest("GET", "/products", nil)
+	w2 := httptest.NewRecorder()
+	router.ServeHTTP(w2, req2)
+	if w2.Code != http.StatusNotFound {
+		t.Errorf("expected 404 for unregistered /products, got %d", w2.Code)
+	}
+}
+
+func TestRouter_AutoRegisterCSR_ConvertsParamSyntax(t *testing.T) {
+	m := makeManifest(map[string]server.PageEntry{
+		"/users/[id]": {Mode: "csr"},
+	})
+	router := server.NewRouter(m)
+	router.SetLayout(layoutWithTitle)
+
+	if err := router.AutoRegisterCSR(); err != nil {
+		t.Fatalf("AutoRegisterCSR: %v", err)
+	}
+
+	req := httptest.NewRequest("GET", "/users/42", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200 for /users/42, got %d", w.Code)
+	}
+}
+
+func TestRouter_AutoRegisterCSR_ErrorWithoutLayout(t *testing.T) {
+	m := makeManifest(map[string]server.PageEntry{"/cart": {Mode: "csr"}})
+	router := server.NewRouter(m)
+
+	if err := router.AutoRegisterCSR(); err == nil {
+		t.Error("expected error when layout not set")
+	}
+}
+
+func TestRouter_AutoRegisterCSR_ShellContainsMainScript(t *testing.T) {
+	m := makeManifest(map[string]server.PageEntry{"/app": {Mode: "csr"}})
+	m.MainScript = "/assets/index-TEST.js"
+	router := server.NewRouter(m)
+	router.SetLayout(layoutWithTitle)
+
+	if err := router.AutoRegisterCSR(); err != nil {
+		t.Fatalf("AutoRegisterCSR: %v", err)
+	}
+
+	req := httptest.NewRequest("GET", "/app", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if !strings.Contains(w.Body.String(), "/assets/index-TEST.js") {
+		t.Error("expected main script in CSR shell")
+	}
+}
+
 func TestRouter_ISR_CacheMiss(t *testing.T) {
 	m := makeManifest(map[string]server.PageEntry{
 		"/shop": {Mode: "isr", Revalidate: 60},

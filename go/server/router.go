@@ -135,6 +135,59 @@ func (r *Router) Mount(prefix string, handler http.Handler) {
 	r.mux.Handle(prefix, http.StripPrefix(strings.TrimSuffix(prefix, "/"), handler))
 }
 
+// ManifestRouteToGoPattern converts a file-based route like /products/[id]
+// to a Go ServeMux wildcard pattern like /products/{id}.
+func ManifestRouteToGoPattern(route string) string {
+	var b strings.Builder
+	for i := 0; i < len(route); {
+		if route[i] == '[' {
+			end := strings.IndexByte(route[i:], ']')
+			if end != -1 {
+				b.WriteByte('{')
+				b.WriteString(route[i+1 : i+end])
+				b.WriteByte('}')
+				i += end + 1
+				continue
+			}
+		}
+		b.WriteByte(route[i])
+		i++
+	}
+	return b.String()
+}
+
+// AutoRegisterCSR reads the manifest and registers every CSR-mode page as a
+// static HTML shell served directly from memory. SetLayout must be called first.
+func (r *Router) AutoRegisterCSR() error {
+	if r.layout == nil {
+		return fmt.Errorf("regox: SetLayout must be called before AutoRegisterCSR")
+	}
+	shell, err := r.renderCSRShell()
+	if err != nil {
+		return fmt.Errorf("regox: render CSR shell: %w", err)
+	}
+	for route, entry := range r.manifest.Pages {
+		if entry.Mode == "csr" {
+			r.CSR(ManifestRouteToGoPattern(route), shell)
+		}
+	}
+	return nil
+}
+
+func (r *Router) renderCSRShell() (string, error) {
+	empty := templ.ComponentFunc(func(_ context.Context, _ io.Writer) error { return nil })
+	wrapped := r.wrapLayout("", empty)
+	var buf bytes.Buffer
+	if err := wrapped.Render(context.Background(), &buf); err != nil {
+		return "", err
+	}
+	html := buf.String()
+	if scripts := r.islandScripts(); scripts != "" {
+		html = strings.Replace(html, "</body>", scripts+"</body>", 1)
+	}
+	return html, nil
+}
+
 func (r *Router) CSR(pattern string, shell string) {
 	r.mux.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")

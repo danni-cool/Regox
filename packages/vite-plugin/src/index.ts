@@ -7,6 +7,17 @@ import { detectIslands } from './island-detector.ts'
 import { compileJSXToTempl, CompileError, type ScaffoldSpec } from './jsx-compiler.ts'
 import { writeTemplFiles } from './templ-writer.ts'
 import { writeManifest } from './manifest-writer.ts'
+import { writeGoRoutes } from './go-routes-writer.ts'
+
+function readGoModule(appRoot: string): string | undefined {
+  try {
+    const goMod = fs.readFileSync(path.join(appRoot, 'backend', 'go.mod'), 'utf-8')
+    const match = goMod.match(/^module\s+(\S+)/m)
+    return match?.[1]
+  } catch {
+    return undefined
+  }
+}
 import { generateIslandRegistration } from './island-registry.ts'
 import { validatePageComponent } from './page-validator.ts'
 import { injectIslandScripts } from './island-injector.ts'
@@ -223,7 +234,11 @@ export function regox(config: RegoxConfig): Plugin {
       }
 
       writeManifest(pendingManifest.pages, pendingManifest.islandMaps, distDir, mainScript, islandChunks, styleSheet)
+      const goModule = readGoModule(path.resolve('.'))
+      const goRoutesDir = path.resolve('backend/regoxroutes')
+      writeGoRoutes(pendingManifest.pages, goRoutesDir, 'regoxroutes', goModule ? { goModule } : undefined)
       console.log(`[regox] manifest written: frontend/dist/manifest.json (${pendingManifest.pages.length} pages, ${Object.keys(islandChunks).length} island chunks)`)
+      console.log(`[regox] routes written: backend/regoxroutes/routes.go${goModule ? ` (module: ${goModule})` : ''}`)
       pendingManifest = null
     },
 
