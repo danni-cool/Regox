@@ -8,6 +8,8 @@ import { compileJSXToTempl, CompileError } from './jsx-compiler.ts'
 import { writeTemplFiles } from './templ-writer.ts'
 import { writeManifest } from './manifest-writer.ts'
 import { generateIslandRegistration } from './island-registry.ts'
+import { validatePageComponent } from './page-validator.ts'
+import { injectIslandScripts } from './island-injector.ts'
 
 export function regox(config: RegoxConfig): Plugin {
   let islandMapCache: IslandMap = new Map()
@@ -56,6 +58,13 @@ export function regox(config: RegoxConfig): Plugin {
         }
       }
 
+      // Validate SSR/ISR pages don't use hooks directly in the page component body
+      // Insert just before: pendingManifest = { pages, islandMaps }
+      for (const page of ssrPages) {
+        const source = fs.readFileSync(page.filePath, 'utf-8')
+        validatePageComponent(source, page.filePath)
+      }
+
       // Defer manifest writing to closeBundle so Vite's emptyOutDir doesn't delete it
       pendingManifest = { pages, islandMaps }
     },
@@ -73,6 +82,11 @@ export function regox(config: RegoxConfig): Plugin {
       if (!islandMapCache.has(basename)) return null
       const registration = generateIslandRegistration(basename)
       return { code: code + '\n' + registration, map: null }
+    },
+
+    transformIndexHtml(html) {
+      if (islandMapCache.size === 0) return html
+      return injectIslandScripts(html, islandMapCache, '/assets/islands.js')
     },
 
     configureServer(server) {
