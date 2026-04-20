@@ -198,7 +198,10 @@ export function regox(config: RegoxConfig): Plugin {
     transform(code, id) {
       const basename = path.basename(id, path.extname(id))
       if (!islandMapCache.has(basename)) return null
-      const registration = generateIslandRegistration(basename, resolvedProvidersPath)
+      const providersArg = resolvedProvidersPath
+        ? path.relative(path.dirname(id), resolvedProvidersPath)
+        : undefined
+      const registration = generateIslandRegistration(basename, providersArg)
       return { code: code + '\n' + registration, map: null }
     },
 
