@@ -19,10 +19,11 @@ export function writeManifest(
   islandMaps: Map<string, IslandMap>,
   outDir: string,
   mainScript?: string,
+  islandChunks?: Record<string, string>,
 ): void {
   const manifest: Manifest = {
     pages: {},
-    islandChunks: {},
+    islandChunks: islandChunks ?? {},
     ...(mainScript ? { mainScript } : {}),
   }
 

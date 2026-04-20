@@ -50,13 +50,20 @@ func NewRouter(manifest *Manifest) *Router {
 	}
 }
 
-// islandScript returns the <script> tag that loads the island bundle, if
-// the manifest specifies a mainScript. Empty string otherwise.
-func (r *Router) islandScript() string {
-	if r.manifest == nil || r.manifest.MainScript == "" {
+// islandScripts returns all <script> tags needed for SSR island hydration:
+// one for the mainScript (CSR shell) and one per island chunk in the manifest.
+func (r *Router) islandScripts() string {
+	if r.manifest == nil {
 		return ""
 	}
-	return fmt.Sprintf(`<script type="module" src="%s"></script>`, r.manifest.MainScript)
+	var sb strings.Builder
+	if r.manifest.MainScript != "" {
+		sb.WriteString(fmt.Sprintf(`<script type="module" src="%s"></script>`, r.manifest.MainScript))
+	}
+	for _, chunkURL := range r.manifest.IslandChunks {
+		sb.WriteString(fmt.Sprintf(`<script type="module" src="%s"></script>`, chunkURL))
+	}
+	return sb.String()
 }
 
 func (r *Router) SetLayout(fn func(title string) templ.Component) {
@@ -79,7 +86,7 @@ func (r *Router) SSR(pattern string, page PageFunc, resolver ResolverFunc) {
 		if r.layout != nil {
 			comp = r.wrapLayout(extractTitle(data), comp)
 		}
-		if err := RenderPage(w, comp, data, r.islandScript()); err != nil {
+		if err := RenderPage(w, comp, data, r.islandScripts()); err != nil {
 			log.Printf("[regox] render error: %v", err)
 		}
 	})
@@ -217,7 +224,7 @@ func (r *Router) renderToBytes(ctx context.Context, page PageFunc, resolver Reso
 		return nil, fmt.Errorf("marshal state: %w", err)
 	}
 	stateScript := fmt.Sprintf(`<script id="__REGOX_STATE__" type="application/json">%s</script>`, stateJSON)
-	inject := stateScript + r.islandScript()
+	inject := stateScript + r.islandScripts()
 	if strings.Contains(html, "</body>") {
 		html = strings.Replace(html, "</body>", inject+"</body>", 1)
 	}

@@ -6,7 +6,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/a-h/templ"
 	"regox.dev/mvp/api"
@@ -27,12 +26,6 @@ func main() {
 		log.Fatalf("failed to load manifest: %v", err)
 	}
 	log.Printf("manifest loaded: %d pages", len(manifest.Pages))
-
-	shell, err := os.ReadFile("../frontend/dist/index.html")
-	if err != nil {
-		log.Printf("warning: no CSR shell found: %v", err)
-		shell = []byte("<html><body><!-- CSR shell not built yet --></body></html>")
-	}
 
 	r := server.NewRouter(manifest)
 	r.SetLayout(func(title string) templ.Component {
@@ -77,7 +70,11 @@ func main() {
 		return templates.NewsDetailPage(d), nil
 	}, resolvers.NewNewsDetail(s))
 
-	r.CSR("/cart", string(shell))
+	r.SSR("/cart", func(ctx context.Context, data any) (templ.Component, error) {
+		return templates.CartPage(), nil
+	}, func(ctx context.Context, req *http.Request) (any, error) {
+		return struct{}{}, nil
+	})
 
 	r.NotFound(func(ctx context.Context, data any) (templ.Component, error) {
 		return templates.NotFound(), nil

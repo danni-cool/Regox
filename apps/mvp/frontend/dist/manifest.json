@@ -33,6 +33,12 @@
       "revalidate": 300
     }
   },
-  "islandChunks": {},
-  "mainScript": "/assets/index-RQjVk0yp.js"
+  "islandChunks": {
+    "AddToCart": "/assets/islands/AddToCart-DQi9u5Hd.js",
+    "CartBadge": "/assets/islands/CartBadge-BVfAxw5K.js",
+    "CartView-jBq": "/assets/islands/CartView-jBq-e897.js",
+    "Reviews": "/assets/islands/Reviews-BErFJd3Q.js",
+    "Toast-C": "/assets/islands/Toast-C-3K54vn.js"
+  },
+  "mainScript": "/assets/index-Ca4Zr9en.js"
 }

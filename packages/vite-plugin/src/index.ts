@@ -20,6 +20,43 @@ export function regox(config: RegoxConfig): Plugin {
   return {
     name: 'regox',
 
+    config(cfg, { command }) {
+      if (command !== 'build') return
+      // Add all island files as additional rollup entry points so they get
+      // bundled and the transform hook can inject registration code into them.
+      const islandsDir = path.resolve('frontend/islands')
+      if (!fs.existsSync(islandsDir)) return
+      const islandEntries: Record<string, string> = {}
+      for (const file of fs.readdirSync(islandsDir)) {
+        if (/\.(tsx|ts)$/.test(file)) {
+          const name = path.basename(file, path.extname(file))
+          islandEntries[`islands/${name}`] = path.join(islandsDir, file)
+        }
+      }
+      if (Object.keys(islandEntries).length === 0) return
+
+      // Merge with existing input (default is index.html, may be string or object)
+      const existingInput = cfg.build?.rollupOptions?.input
+      let mergedInput: Record<string, string>
+      if (!existingInput) {
+        // Default Vite entry is index.html at project root
+        mergedInput = { index: path.resolve('index.html'), ...islandEntries }
+      } else if (typeof existingInput === 'string') {
+        mergedInput = { index: existingInput, ...islandEntries }
+      } else if (Array.isArray(existingInput)) {
+        const arrEntries = Object.fromEntries(existingInput.map((e, i) => [`entry${i}`, e]))
+        mergedInput = { ...arrEntries, ...islandEntries }
+      } else {
+        mergedInput = { ...existingInput as Record<string, string>, ...islandEntries }
+      }
+
+      return {
+        build: {
+          rollupOptions: { input: mergedInput },
+        },
+      }
+    },
+
     buildStart() {
       const pagesDir = path.resolve('frontend/pages')
       const templatesDir = path.resolve('backend/templates')
@@ -38,6 +75,27 @@ export function regox(config: RegoxConfig): Plugin {
         islandMaps.set(page.route, islandMap)
         for (const [name, meta] of islandMap) {
           islandMapCache.set(name, meta)
+        }
+      }
+
+      // Register all island files from the islands/ directory.
+      // Hand-written templ files reference islands via data-island="..." and bypass
+      // the JSX page scanner, so we must register them unconditionally here.
+      const islandsDir = path.resolve('frontend/islands')
+      if (fs.existsSync(islandsDir)) {
+        for (const file of fs.readdirSync(islandsDir)) {
+          if (/\.(tsx|ts)$/.test(file)) {
+            const name = path.basename(file, path.extname(file))
+            if (!islandMapCache.has(name)) {
+              islandMapCache.set(name, {
+                componentName: name,
+                filePath: path.join(islandsDir, file),
+                props: [],
+                reason: ['explicit-island-dir'],
+              })
+              console.log(`[regox] ✓ ${name} → Island (explicit)`)
+            }
+          }
         }
       }
 
@@ -75,12 +133,12 @@ export function regox(config: RegoxConfig): Plugin {
       }
 
       // Scan all island files for event usage and build EventMap
-      const islandsDir = path.resolve('frontend/islands')
-      if (fs.existsSync(islandsDir)) {
-        const allEntries = fs.readdirSync(islandsDir)
+      const islandsDirForEvents = path.resolve('frontend/islands')
+      if (fs.existsSync(islandsDirForEvents)) {
+        const allEntries = fs.readdirSync(islandsDirForEvents)
           .filter(f => /\.(tsx|ts)$/.test(f))
           .flatMap(f => {
-            const fp = path.join(islandsDir, f)
+            const fp = path.join(islandsDirForEvents, f)
             return scanEventUsage(fs.readFileSync(fp, 'utf-8'), f)
           })
         eventMapCache = buildEventMap(allEntries)
@@ -109,8 +167,26 @@ export function regox(config: RegoxConfig): Plugin {
         if (match) mainScript = match[1]
       } catch { /* dev mode or pre-build — skip */ }
 
-      writeManifest(pendingManifest.pages, pendingManifest.islandMaps, distDir, mainScript)
-      console.log(`[regox] manifest written: frontend/dist/manifest.json (${pendingManifest.pages.length} pages)`)
+      // Scan built islands/ chunk directory to populate islandChunks map.
+      // Island name → hashed chunk URL (e.g. "AddToCart" → "/assets/islands/AddToCart-XYZ.js")
+      const islandChunks: Record<string, string> = {}
+      const builtIslandsDir = path.join(distDir, 'assets', 'islands')
+      if (fs.existsSync(builtIslandsDir)) {
+        // Match each built chunk back to a known island name by finding the
+        // longest island name that is a prefix of the filename. This avoids
+        // hash-stripping bugs when hashes themselves contain hyphens.
+        const knownNames = [...islandMapCache.keys()]
+        for (const file of fs.readdirSync(builtIslandsDir)) {
+          if (!file.endsWith('.js')) continue
+          const matchedName = knownNames.find(n => file.startsWith(n + '-') || file === n + '.js')
+          if (matchedName) {
+            islandChunks[matchedName] = `/assets/islands/${file}`
+          }
+        }
+      }
+
+      writeManifest(pendingManifest.pages, pendingManifest.islandMaps, distDir, mainScript, islandChunks)
+      console.log(`[regox] manifest written: frontend/dist/manifest.json (${pendingManifest.pages.length} pages, ${Object.keys(islandChunks).length} island chunks)`)
       pendingManifest = null
     },
 
