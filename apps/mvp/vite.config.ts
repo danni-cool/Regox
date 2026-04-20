@@ -10,6 +10,11 @@ export default defineConfig({
     react(),
     regox(regoxConfig),
   ],
+  resolve: {
+    alias: {
+      '@/': new URL('./frontend/', import.meta.url).pathname,
+    },
+  },
   build: {
     outDir: 'frontend/dist',
   },
