@@ -126,6 +126,8 @@ function emitJSXElement(node: t.JSXElement, indent: string, ctx: EmitCtx): strin
   const opening = node.openingElement
   const rawName = t.isJSXIdentifier(opening.name) ? opening.name.name : ''
 
+  if (rawName === 'Client') return emitClientElement(node, indent, ctx)
+
   if (ctx.islandMap.has(rawName)) return emitIslandMount(rawName, ctx.islandMap.get(rawName)!, indent)
 
   if (/^[A-Z]/.test(rawName)) {
@@ -159,6 +161,56 @@ function emitJSXElement(node: t.JSXElement, indent: string, ctx: EmitCtx): strin
 
   const children = node.children.map(c => emitNode(c, indent + '  ', ctx)).filter(Boolean).join('\n')
   return `${indent}<${rawName}${attrSep}>\n${children}\n${indent}</${rawName}>`
+}
+
+function emitClientElement(node: t.JSXElement, indent: string, ctx: EmitCtx): string {
+  const attrs = node.openingElement.attributes as t.JSXAttribute[]
+
+  // Extract name prop — required
+  const nameAttr = attrs.find(a => t.isJSXAttribute(a) && getAttrName(a as t.JSXAttribute) === 'name')
+  if (!nameAttr || !t.isJSXAttribute(nameAttr) || !t.isStringLiteral(nameAttr.value)) {
+    throw new CompileError(
+      `<Client> is missing required string literal "name" prop`,
+      ctx.filePath,
+    )
+  }
+  const islandName = (nameAttr.value as t.StringLiteral).value
+
+  // Extract className — applied to div, not serialized
+  const classAttr = attrs.find(a => t.isJSXAttribute(a) && getAttrName(a as t.JSXAttribute) === 'className')
+  const classValue = classAttr && t.isJSXAttribute(classAttr) && t.isStringLiteral(classAttr.value)
+    ? classAttr.value.value
+    : undefined
+
+  // Collect remaining props (exclude name, className)
+  const propsAttrs = attrs.filter(a => {
+    if (!t.isJSXAttribute(a)) return false
+    const n = getAttrName(a)
+    return n !== 'name' && n !== 'className'
+  }) as t.JSXAttribute[]
+
+  // Build props entries for templ output
+  const propsEntries = propsAttrs.map(a => {
+    const propName = getAttrName(a)
+    if (!a.value) return `${indent}    "${propName}": true,`
+    if (t.isStringLiteral(a.value)) return `${indent}    "${propName}": "${a.value.value}",`
+    if (t.isJSXExpressionContainer(a.value)) {
+      const goExpr = emitGoExpr(a.value.expression as t.Expression, ctx)
+      return `${indent}    "${propName}": ${goExpr},`
+    }
+    throw new CompileError(`Unsupported prop value on <Client name="${islandName}">`, ctx.filePath)
+  })
+
+  const classLine = classValue ? `\n${indent}  class="${classValue}"` : ''
+
+  return [
+    `${indent}<div`,
+    `${indent}  data-island="${islandName}"`,
+    `${indent}  data-props={ templ.JSONString(map[string]any{`,
+    ...propsEntries,
+    `${indent}  }) }${classLine}`,
+    `${indent}></div>`,
+  ].join('\n')
 }
 
 function getAttrName(attr: t.JSXAttribute): string {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { compileJSXToTempl } from '../jsx-compiler'
+import { compileJSXToTempl, CompileError } from '../jsx-compiler'
 import type { IslandMap, IslandMeta, CompileOptions } from '../types'
 
 const baseOpts: CompileOptions = {
@@ -220,6 +220,63 @@ describe('Island component substitution', () => {
     expect(templ).toContain('"productId": data.Product.Id')
     expect(templ).toContain('// TODO: unsupported prop "items" omitted')
     expect(templ).not.toContain('"items":')
+  })
+})
+
+// ── <Client> Form 1 — self-closing island mount ───────────────────────────────
+
+describe('<Client> Form 1 — self-closing island mount', () => {
+  it('emits data-island mount for <Client name="X" />', () => {
+    const src = `
+      export default function ProductPage({ product }: ProductPageData) {
+        return (
+          <div>
+            <Client name="AddToCart" productId={product.id} />
+          </div>
+        )
+      }
+    `
+    const { templ } = compile(src)
+    expect(templ).toContain('data-island="AddToCart"')
+    expect(templ).toContain('"productId": data.Product.ID')
+  })
+
+  it('applies className to mount-point div, not data-props', () => {
+    const src = `
+      export default function ProductPage({ product }: ProductPageData) {
+        return (
+          <div>
+            <Client name="AddToCart" productId={product.id} className="mt-4" />
+          </div>
+        )
+      }
+    `
+    const { templ } = compile(src)
+    expect(templ).toContain('class="mt-4"')
+    expect(templ).not.toContain('"className"')
+  })
+
+  it('does not serialize the name prop into data-props', () => {
+    const src = `
+      export default function ProductPage({ product }: ProductPageData) {
+        return (
+          <div>
+            <Client name="AddToCart" productId={product.id} />
+          </div>
+        )
+      }
+    `
+    const { templ } = compile(src)
+    expect(templ).not.toContain('"name"')
+  })
+
+  it('throws CompileError when name prop is missing', () => {
+    const src = `
+      export default function ProductPage({ product }: ProductPageData) {
+        return <Client productId={product.id} />
+      }
+    `
+    expect(() => compile(src)).toThrow(CompileError)
   })
 })
 
