@@ -27,4 +27,4 @@ if (typeof window !== 'undefined') {
   window.__regox_bus__ ??= createBus()
 }
 
-export const bus = window.__regox_bus__
+export const bus = typeof window !== 'undefined' ? window.__regox_bus__ : undefined

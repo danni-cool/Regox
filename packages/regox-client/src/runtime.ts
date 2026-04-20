@@ -25,7 +25,7 @@ export function mountIslands(registry: IslandRegistry): void {
     }
     let props: Record<string, unknown> = {}
     try {
-      props = JSON.parse(el.getAttribute('data-props') ?? '{}')
+      props = JSON.parse(el.getAttribute('data-island-props') ?? '{}')
     } catch {
       console.warn(`[regox] failed to parse props for Island "${name}"`)
     }

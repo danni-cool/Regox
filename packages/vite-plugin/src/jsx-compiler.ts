@@ -271,7 +271,7 @@ function emitClientElement(node: t.JSXElement, indent: string, ctx: EmitCtx): st
   return [
     `${indent}<div`,
     `${indent}  data-island="${islandName}"`,
-    `${indent}  data-props={ templ.JSONString(map[string]any{`,
+    `${indent}  data-island-props={ templ.JSONString(map[string]any{`,
     ...propsEntries,
     `${indent}  }) }${classLine}`,
     `${indent}></div>`,
@@ -428,7 +428,7 @@ function emitIslandMount(name: string, meta: IslandMeta, indent: string): string
   return [
     `${indent}<div`,
     `${indent}  data-island="${name}"`,
-    `${indent}  data-props={ templ.JSONString(map[string]any{`,
+    `${indent}  data-island-props={ templ.JSONString(map[string]any{`,
     propsBlock,
     `${indent}  }) }`,
     `${indent}></div>`,
