@@ -16,11 +16,36 @@ import type {
 
 type FnNode = FunctionDeclaration | ArrowFunctionExpression | FunctionExpression
 
+/**
+ * Collect top-level `const NAME = "..."` or `const NAME = \`...\`` declarations.
+ * Used to resolve identifier references in dangerouslySetInnerHTML.
+ */
+function collectTopLevelConsts(ast: ReturnType<typeof parser.parse>): Map<string, string> {
+  const consts = new Map<string, string>()
+  for (const node of ast.program.body) {
+    if (node.type !== 'VariableDeclaration' || node.kind !== 'const') continue
+    for (const decl of node.declarations) {
+      if (decl.id.type !== 'Identifier') continue
+      const name = decl.id.name
+      const init = decl.init
+      if (!init) continue
+      if (init.type === 'StringLiteral') {
+        consts.set(name, init.value)
+      } else if (init.type === 'TemplateLiteral' && init.expressions.length === 0) {
+        consts.set(name, init.quasis[0].value.cooked ?? '')
+      }
+    }
+  }
+  return consts
+}
+
 export function compileLayout(src: string): string {
   const ast = parser.parse(src, {
     sourceType: 'module',
     plugins: ['jsx', 'typescript'],
   })
+
+  const topLevelConsts = collectTopLevelConsts(ast)
 
   let rootJsx: JSXElement | JSXFragment | null = null
 
@@ -41,7 +66,7 @@ export function compileLayout(src: string): string {
 
   const lines: string[] = ['package templates', '', 'templ Layout(title string, stylesheet string) {', '\t<!DOCTYPE html>']
 
-  emitJsx(rootJsx, lines, 1)
+  emitJsx(rootJsx, lines, 1, topLevelConsts)
 
   lines.push('}')
   return lines.join('\n') + '\n'
@@ -74,10 +99,10 @@ function indent(depth: number): string {
   return '\t'.repeat(depth)
 }
 
-function emitJsx(node: JSXElement | JSXFragment, lines: string[], depth: number): void {
+function emitJsx(node: JSXElement | JSXFragment, lines: string[], depth: number, consts: Map<string, string>): void {
   if (node.type === 'JSXFragment') {
     for (const child of node.children) {
-      emitChild(child, lines, depth)
+      emitChild(child, lines, depth, consts)
     }
     return
   }
@@ -97,7 +122,7 @@ function emitJsx(node: JSXElement | JSXFragment, lines: string[], depth: number)
 
   // Handle <script dangerouslySetInnerHTML>
   if (tagName === 'script') {
-    const dsi = extractDangerouslySetInnerHTML(opening)
+    const dsi = extractDangerouslySetInnerHTML(opening, consts)
     if (dsi !== null) {
       lines.push(`${indent(depth)}<script>${dsi}</script>`)
       return
@@ -115,19 +140,19 @@ function emitJsx(node: JSXElement | JSXFragment, lines: string[], depth: number)
   lines.push(`${indent(depth)}<${tagName}${attrs}>`)
 
   for (const child of node.children) {
-    emitChild(child, lines, depth + 1)
+    emitChild(child, lines, depth + 1, consts)
   }
 
   lines.push(`${indent(depth)}</${tagName}>`)
 }
 
-function emitChild(child: JSXChild, lines: string[], depth: number): void {
+function emitChild(child: JSXChild, lines: string[], depth: number, consts: Map<string, string>): void {
   switch (child.type) {
     case 'JSXElement':
-      emitJsx(child as JSXElement, lines, depth)
+      emitJsx(child as JSXElement, lines, depth, consts)
       break
     case 'JSXFragment':
-      emitJsx(child as JSXFragment, lines, depth)
+      emitJsx(child as JSXFragment, lines, depth, consts)
       break
     case 'JSXText': {
       const text = child.value.replace(/^\n[\t ]*/, '').replace(/\n[\t ]*$/, '')
@@ -207,7 +232,7 @@ function extractAttrValue(opening: JSXOpeningElement, attrName: string): string 
   return null
 }
 
-function extractDangerouslySetInnerHTML(opening: JSXOpeningElement): string | null {
+function extractDangerouslySetInnerHTML(opening: JSXOpeningElement, consts: Map<string, string>): string | null {
   for (const attr of opening.attributes) {
     if (attr.type !== 'JSXAttribute') continue
     if ((attr.name as any).name !== 'dangerouslySetInnerHTML') continue
@@ -229,6 +254,11 @@ function extractDangerouslySetInnerHTML(opening: JSXOpeningElement): string | nu
         if ((val as TemplateLiteral).expressions.length === 0) {
           return (val as TemplateLiteral).quasis[0].value.cooked ?? ''
         }
+      }
+      // Resolve identifier references to top-level const declarations
+      if (val.type === 'Identifier') {
+        const resolved = consts.get((val as import('@babel/types').Identifier).name)
+        if (resolved !== undefined) return resolved
       }
     }
   }
