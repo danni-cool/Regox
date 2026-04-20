@@ -15,31 +15,31 @@ import (
 // CSR routes are auto-registered by RegisterRoutes via AutoRegisterCSR.
 // SSR/ISR routes call the matching PageResolvers method.
 const (
-	RouteHome = "/" // ssr
 	RouteCart = "/cart" // csr — auto-registered
-	RouteProducts = "/products" // isr — revalidate: 60s
+	RouteHome = "/" // ssr
 	RouteProductsId = "/products/{id}" // ssr
+	RouteProducts = "/products" // isr — revalidate: 60s
 )
 
 // PageModes maps each route constant to its rendering mode.
 var PageModes = map[string]string{
-	RouteHome: "ssr",
 	RouteCart: "csr",
-	RouteProducts: "isr",
+	RouteHome: "ssr",
 	RouteProductsId: "ssr",
+	RouteProducts: "isr",
 }
 
 // PageResolvers provides data for all SSR and ISR pages.
 // Implement this interface and pass it to RegisterRoutes.
 type PageResolvers interface {
 	HomePage(ctx context.Context, req *http.Request) (any, error)
-	ProductsPage(ctx context.Context, req *http.Request) (any, error)
 	ProductDetailPage(ctx context.Context, req *http.Request) (any, error)
+	ProductsPage(ctx context.Context, req *http.Request) (any, error)
 }
 
 // RegisterRoutes wires all pages from the manifest.
 // SSR/ISR pages call the matching method on resolvers for each request.
-// CSR pages are served as static HTML shells via AutoRegisterCSR.
+// CSR pages are pre-rendered shells that include island mount points.
 func RegisterRoutes(r *server.Router, resolvers PageResolvers) error {
 	r.SSR(RouteHome, func(ctx context.Context, data any) (templ.Component, error) {
 		return templates.HomePage(data.(generated.HomePageData)), nil
@@ -56,5 +56,8 @@ func RegisterRoutes(r *server.Router, resolvers PageResolvers) error {
 	}, func(ctx context.Context, req *http.Request) (any, error) {
 		return resolvers.ProductsPage(ctx, req)
 	})
-	return r.AutoRegisterCSR()
+	if err := r.CSRPage(RouteCart, templates.CartPage()); err != nil {
+		return err
+	}
+	return nil
 }

@@ -51,6 +51,16 @@ export const useCartStore = create<CartState>()(
         totalCount: items.reduce((sum, i) => sum + i.quantity, 0),
       }),
     }),
-    { name: 'regox-cart' },
+    {
+      name: 'regox-cart',
+      version: 1,
+      migrate: (persisted: unknown) => {
+        const state = persisted as { items?: CartItemState[] }
+        const items = (state?.items ?? []).filter(
+          (i): i is CartItemState => typeof i.price === 'number',
+        )
+        return { ...state, items, totalCount: items.reduce((s, i) => s + i.quantity, 0) }
+      },
+    },
   )
 )

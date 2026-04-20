@@ -68,11 +68,11 @@ function generateRegisterRoutes(pages: PageMeta[]): string {
   const lines = [
     '// RegisterRoutes wires all pages from the manifest.',
     '// SSR/ISR pages call the matching method on resolvers for each request.',
-    '// CSR pages are served as static HTML shells via AutoRegisterCSR.',
+    '// CSR pages are pre-rendered shells that include island mount points.',
     'func RegisterRoutes(r *server.Router, resolvers PageResolvers) error {',
   ]
 
-  // Suppress unused import error when no server pages exist
+  // Suppress unused import error when only CSR pages exist (no generated data types needed)
   const serverPages = pages.filter(p => p.mode === 'ssr' || p.mode === 'isr')
   if (serverPages.length === 0) {
     lines.push('\t_ = templ.ComponentFunc(nil)')
@@ -100,8 +100,16 @@ function generateRegisterRoutes(pages: PageMeta[]): string {
       `\t})`,
     )
   }
+  for (const page of pages.filter(p => p.mode === 'csr')) {
+    const constName = routeToConstName(page.route)
+    lines.push(
+      `\tif err := r.CSRPage(${constName}, templates.${page.pageName}()); err != nil {`,
+      `\t\treturn err`,
+      `\t}`,
+    )
+  }
 
-  lines.push('\treturn r.AutoRegisterCSR()')
+  lines.push('\treturn nil')
   lines.push('}')
   return lines.join('\n')
 }

@@ -176,7 +176,26 @@ func (r *Router) AutoRegisterCSR() error {
 
 func (r *Router) renderCSRShell() (string, error) {
 	empty := templ.ComponentFunc(func(_ context.Context, _ io.Writer) error { return nil })
-	wrapped := r.wrapLayout("", empty)
+	return r.renderPageShell("", empty)
+}
+
+// CSRPage pre-renders a page component inside the layout and serves it as a
+// static HTML shell. Use this instead of AutoRegisterCSR when a CSR page has
+// island mount points that must appear in the initial HTML.
+func (r *Router) CSRPage(pattern string, page templ.Component) error {
+	if r.layout == nil {
+		return fmt.Errorf("regox: SetLayout must be called before CSRPage")
+	}
+	html, err := r.renderPageShell("", page)
+	if err != nil {
+		return fmt.Errorf("regox: render CSR page shell for %s: %w", pattern, err)
+	}
+	r.CSR(pattern, html)
+	return nil
+}
+
+func (r *Router) renderPageShell(title string, page templ.Component) (string, error) {
+	wrapped := r.wrapLayout(title, page)
 	var buf bytes.Buffer
 	if err := wrapped.Render(context.Background(), &buf); err != nil {
 		return "", err

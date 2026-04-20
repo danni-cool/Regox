@@ -12,12 +12,6 @@
       "mode": "ssr",
       "islands": []
     },
-    "/product/[id]": {
-      "mode": "ssr",
-      "islands": [
-        "CartButton"
-      ]
-    },
     "/products/[id]": {
       "mode": "ssr",
       "islands": []
@@ -26,20 +20,16 @@
       "mode": "isr",
       "islands": [],
       "revalidate": 60
-    },
-    "/shop": {
-      "mode": "isr",
-      "islands": [],
-      "revalidate": 300
     }
   },
   "islandChunks": {
-    "AddToCart": "/assets/islands/AddToCart-ryy_Roxn.js",
-    "CartBadge": "/assets/islands/CartBadge-B0XFO42w.js",
-    "CartView": "/assets/islands/CartView-CzOms2Fl.js",
-    "Reviews": "/assets/islands/Reviews-BBfJKhmn.js",
-    "Toast": "/assets/islands/Toast-K9O91S-4.js"
+    "AddToCart": "/assets/islands/AddToCart-DMrfSSu4.js",
+    "CartBadge": "/assets/islands/CartBadge-D7wf0pJl.js",
+    "CartView": "/assets/islands/CartView-DZdsOY6I.js",
+    "Reviews": "/assets/islands/Reviews-C1fGD-x2.js",
+    "ThemeToggle": "/assets/islands/ThemeToggle-CRHx7eln.js",
+    "Toast": "/assets/islands/Toast-D5iviVGb.js"
   },
-  "mainScript": "/assets/index-CuQ9XZSO.js",
-  "styleSheet": "/assets/index-B23bFJkh.css"
+  "mainScript": "/assets/index-CfFlpjDS.js",
+  "styleSheet": "/assets/index-BsxYgeYa.css"
 }
