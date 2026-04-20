@@ -9,11 +9,18 @@ import (
 	"os"
 
 	"github.com/a-h/templ"
+	"regox.dev/mvp/generated"
+	"regox.dev/mvp/resolvers"
+	"regox.dev/mvp/store"
 	"regox.dev/mvp/templates"
 	server "regox.dev/server"
 )
 
 func main() {
+	s := store.New()
+	store.Seed(s)
+	log.Printf("store seeded: %d products", len(s.ListProducts()))
+
 	manifest, err := server.LoadManifest("../frontend/dist/manifest.json")
 	if err != nil {
 		log.Fatalf("failed to load manifest: %v", err)
@@ -31,12 +38,23 @@ func main() {
 		return templates.Layout(title)
 	})
 
-	// Serve built assets (JS, CSS, images) from frontend/dist
 	assetsFS := http.FileServer(http.Dir("../frontend/dist/assets"))
 	r.Static("/assets/", assetsFS)
 
-	// TODO(Task 8): replace with M5 routes (homepage, /products, /products/{id}, /news, /news/{id}, /cart + API)
-	r.CSR("/", string(shell))
+	// Pages — Batch 1
+	r.SSR("/", func(ctx context.Context, data any) (templ.Component, error) {
+		d := data.(generated.HomePageData)
+		return templates.HomePage(d), nil
+	}, resolvers.NewHomePage(s))
+
+	r.ISR("/products", func(ctx context.Context, data any) (templ.Component, error) {
+		d := data.(generated.ProductsPageData)
+		return templates.ProductListPage(d), nil
+	}, resolvers.NewProductList(s))
+
+	// /products/{id} added in Task 9 (after product_detail.templ is created)
+
+	r.CSR("/cart", string(shell))
 
 	r.NotFound(func(ctx context.Context, data any) (templ.Component, error) {
 		return templates.NotFound(), nil
