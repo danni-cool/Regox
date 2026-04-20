@@ -31,3 +31,5 @@ export function useSharedState<T>(
 
   return [value, set]
 }
+
+export function _resetStoresForTest() { stores.clear() }

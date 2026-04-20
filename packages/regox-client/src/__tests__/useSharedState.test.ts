@@ -1,10 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useSharedState } from '../useSharedState'
+import { useSharedState, _resetStoresForTest } from '../useSharedState'
 
 beforeEach(() => {
-  // Reset stores map by re-importing. Since vitest isolates modules per test file
-  // but not per test, we rely on unique keys per test.
+  _resetStoresForTest()
 })
 
 describe('useSharedState', () => {

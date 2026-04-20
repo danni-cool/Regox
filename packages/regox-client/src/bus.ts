@@ -23,6 +23,8 @@ declare global {
   interface Window { __regox_bus__?: Bus }
 }
 
-window.__regox_bus__ ??= createBus()
+if (typeof window !== 'undefined') {
+  window.__regox_bus__ ??= createBus()
+}
 
 export const bus = window.__regox_bus__
