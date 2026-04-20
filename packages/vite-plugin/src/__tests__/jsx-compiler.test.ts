@@ -278,6 +278,20 @@ describe('<Client> Form 1 — self-closing island mount', () => {
     `
     expect(() => compile(src)).toThrow(CompileError)
   })
+
+  it('serializes string literal props into data-props', () => {
+    const src = `
+      export default function ProductPage({ product }: ProductPageData) {
+        return (
+          <div>
+            <Client name="AddToCart" label="Add to cart" />
+          </div>
+        )
+      }
+    `
+    const { templ } = compile(src)
+    expect(templ).toContain('"label": "Add to cart"')
+  })
 })
 
 // ── Fast-fail cases ───────────────────────────────────────────────────────────

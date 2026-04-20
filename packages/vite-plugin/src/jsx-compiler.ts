@@ -166,6 +166,12 @@ function emitJSXElement(node: t.JSXElement, indent: string, ctx: EmitCtx): strin
 function emitClientElement(node: t.JSXElement, indent: string, ctx: EmitCtx): string {
   const attrs = node.openingElement.attributes as t.JSXAttribute[]
 
+  // Guard: spread attributes are not supported
+  const spreadAttr = node.openingElement.attributes.find(a => t.isJSXSpreadAttribute(a))
+  if (spreadAttr) {
+    throw new CompileError(`<Client> does not support spread attributes`, ctx.filePath)
+  }
+
   // Extract name prop — required
   const nameAttr = attrs.find(a => t.isJSXAttribute(a) && getAttrName(a as t.JSXAttribute) === 'name')
   if (!nameAttr || !t.isJSXAttribute(nameAttr) || !t.isStringLiteral(nameAttr.value)) {
@@ -178,9 +184,17 @@ function emitClientElement(node: t.JSXElement, indent: string, ctx: EmitCtx): st
 
   // Extract className — applied to div, not serialized
   const classAttr = attrs.find(a => t.isJSXAttribute(a) && getAttrName(a as t.JSXAttribute) === 'className')
-  const classValue = classAttr && t.isJSXAttribute(classAttr) && t.isStringLiteral(classAttr.value)
-    ? classAttr.value.value
-    : undefined
+  let classValue: string | undefined
+  if (classAttr && t.isJSXAttribute(classAttr)) {
+    if (t.isStringLiteral(classAttr.value)) {
+      classValue = classAttr.value.value
+    } else if (t.isJSXExpressionContainer(classAttr.value)) {
+      throw new CompileError(
+        `<Client name="${islandName}"> className must be a string literal, not an expression`,
+        ctx.filePath,
+      )
+    }
+  }
 
   // Collect remaining props (exclude name, className)
   const propsAttrs = attrs.filter(a => {
