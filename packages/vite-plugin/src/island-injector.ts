@@ -1,5 +1,5 @@
 import type { IslandMap } from './types'
-import { generateIslandOverlayScript } from './island-overlay'
+import { generateIslandOverlayScript } from './island-overlay.ts'
 
 export function generateIslandInjectionScript(islandMap: IslandMap, bundleUrl: string): string {
   const _islandNames = Array.from(islandMap.keys())

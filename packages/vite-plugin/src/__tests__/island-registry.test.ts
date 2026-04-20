@@ -14,4 +14,12 @@ describe('generateIslandRegistration', () => {
     expect(a).toContain("'Header'")
     expect(b).toContain("'Footer'")
   })
+
+  it('self-mounts existing data-island elements after registration', () => {
+    const result = generateIslandRegistration('AddToCart')
+    // Must query matching elements and invoke the factory immediately so SSR
+    // islands mount without waiting for a separate DOMContentLoaded listener.
+    expect(result).toContain("data-island=\"AddToCart\"")
+    expect(result).toContain("dataset.islandProps")
+  })
 })

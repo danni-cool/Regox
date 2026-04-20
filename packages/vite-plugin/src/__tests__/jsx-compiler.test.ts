@@ -244,12 +244,25 @@ describe('fast-fail on unsupported patterns', () => {
     expect(() => compile(src)).toThrow('pre-process in resolver')
   })
 
-  it('throws on template literal', () => {
+  it('compiles template literal to fmt.Sprintf', () => {
     const src = `
       export default function ProductPage({ product }: ProductPageData) {
         return <p>{\`Hello \${product.name}\`}</p>
       }
     `
-    expect(() => compile(src)).toThrow('template literal')
+    const result = compile(src)
+    expect(result.templ).toContain('fmt.Sprintf')
+    expect(result.templ).toContain('"Hello %v"')
+  })
+
+  it('compiles template literal in href attribute to fmt.Sprintf', () => {
+    const src = `
+      export default function ProductPage({ product }: ProductPageData) {
+        return <a href={\`/products/\${product.id}\`}>link</a>
+      }
+    `
+    const result = compile(src)
+    expect(result.templ).toContain('fmt.Sprintf')
+    expect(result.templ).toContain('"/products/%v"')
   })
 })

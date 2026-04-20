@@ -33,16 +33,27 @@ func Layout(title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(title)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/layout.templ`, Line: 9, Col: 17}
+		if title != "" {
+			var templ_7745c5c3_Var2 string
+			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(title)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/layout.templ`, Line: 11, Col: 12}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " – Regox Shop")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "Regox Shop")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title></head><body>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</title><script src=\"https://cdn.tailwindcss.com\"></script><style type=\"text/tailwindcss\">\n\t\t\t\t@layer base {\n\t\t\t\t\tbody { @apply bg-gray-50 text-gray-900; }\n\t\t\t\t}\n\t\t\t</style></head><body class=\"min-h-screen flex flex-col\"><nav class=\"bg-white border-b border-gray-200 sticky top-0 z-50\"><div class=\"max-w-6xl mx-auto px-6 py-3 flex items-center justify-between\"><a href=\"/\" class=\"text-xl font-bold text-indigo-600 tracking-tight\">Regox Shop</a><div class=\"flex items-center gap-6 text-sm font-medium text-gray-600\"><a href=\"/products\" class=\"hover:text-indigo-600 transition-colors\">Products</a> <a href=\"/news\" class=\"hover:text-indigo-600 transition-colors\">News</a> <a href=\"/cart\" class=\"relative hover:text-indigo-600 transition-colors\"><span>Cart</span><div data-island=\"CartBadge\" class=\"inline-block ml-1\"></div></a></div></div></nav><div class=\"flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -50,7 +61,7 @@ func Layout(title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><footer class=\"bg-white border-t border-gray-200 mt-16\"><div class=\"max-w-6xl mx-auto px-6 py-8 text-center text-sm text-gray-400\">© 2026 Regox Shop — built with Regox framework</div></footer></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

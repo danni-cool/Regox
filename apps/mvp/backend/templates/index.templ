@@ -1,0 +1,49 @@
+package templates
+
+import (
+	"fmt"
+	"regox.dev/mvp/generated"
+)
+
+templ HomePage(data generated.HomePageData) {
+	<main class="max-w-6xl mx-auto px-6 py-12">
+		<div class="text-center mb-16">
+			<h1 class="text-5xl font-bold text-gray-900 mb-4">Welcome to Regox Shop</h1>
+			<p class="text-xl text-gray-500">Discover our curated collection of products</p>
+		</div>
+		<section class="mb-16">
+			<div class="flex items-center justify-between mb-6">
+				<h2 class="text-2xl font-semibold text-gray-800">Featured Products</h2>
+				<a href="/products" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">View all →</a>
+			</div>
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+				for _, p := range data.FeaturedProducts {
+					<a href={ templ.SafeURL("/products/" + p.Id) } class="group block bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-200">
+						<div class="aspect-square overflow-hidden bg-gray-100">
+							<img src={ p.ImageURL } alt={ p.Name } class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
+						</div>
+						<div class="p-5">
+							<span class="text-xs font-medium text-indigo-500 uppercase tracking-wide">{ p.Category }</span>
+							<h3 class="font-semibold text-gray-900 mt-1 mb-2">{ p.Name }</h3>
+							<p class="text-lg font-bold text-gray-900">${ fmt.Sprintf("%.2f", float64(p.Price)) }</p>
+						</div>
+					</a>
+				}
+			</div>
+		</section>
+		<section>
+			<div class="flex items-center justify-between mb-6">
+				<h2 class="text-2xl font-semibold text-gray-800">Latest News</h2>
+				<a href="/news" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">View all →</a>
+			</div>
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+				for _, n := range data.LatestNews {
+					<a href={ templ.SafeURL("/news/" + n.Id) } class="group block bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-indigo-200 transition-all duration-200">
+						<h3 class="font-semibold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">{ n.Title }</h3>
+						<p class="text-gray-500 text-sm leading-relaxed">{ n.Summary }</p>
+					</a>
+				}
+			</div>
+		</section>
+	</main>
+}

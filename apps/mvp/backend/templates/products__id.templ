@@ -1,0 +1,71 @@
+package templates
+
+import (
+	"fmt"
+	"regox.dev/mvp/generated"
+)
+
+templ ProductDetailPage(data generated.ProductDetailPageData) {
+	<main class="max-w-6xl mx-auto px-6 py-12">
+		<a href="/products" class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 text-sm font-medium mb-8 transition-colors">
+			← Back to Products
+		</a>
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+			<div class="rounded-2xl overflow-hidden bg-gray-100 aspect-square">
+				<img src={ data.Product.ImageURL } alt={ data.Product.Name } class="w-full h-full object-cover"/>
+			</div>
+			<div class="flex flex-col">
+				<span class="text-sm font-medium text-indigo-500 uppercase tracking-wide">{ data.Product.Category }</span>
+				<h1 class="text-3xl font-bold text-gray-900 mt-2">{ data.Product.Name }</h1>
+				<p class="text-4xl font-bold text-gray-900 mt-4">${ fmt.Sprintf("%.2f", float64(data.Product.Price)) }</p>
+				<p class="text-gray-600 mt-4 leading-relaxed">{ data.Product.Description }</p>
+				if data.Product.Stock > 0 {
+					<p class="text-green-600 text-sm font-medium mt-3 flex items-center gap-1">
+						<span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+						{ fmt.Sprintf("%d in stock", data.Product.Stock) }
+					</p>
+				} else {
+					<p class="text-red-500 text-sm font-medium mt-3 flex items-center gap-1">
+						<span class="inline-block w-2 h-2 rounded-full bg-red-500"></span>
+						Out of stock
+					</p>
+				}
+				<div
+					data-island="AddToCart"
+					data-island-props={ fmt.Sprintf(`{"productId":"%s","productName":"%s","price":%.2f}`, data.Product.Id, data.Product.Name, float64(data.Product.Price)) }
+					class="mt-8"
+				></div>
+				<div data-island="Toast" class="mt-4"></div>
+			</div>
+		</div>
+		<section class="mt-16 border-t border-gray-200 pt-12">
+			<h2 class="text-2xl font-semibold text-gray-900 mb-6">Customer Reviews</h2>
+			if len(data.Reviews) == 0 {
+				<div class="text-center py-12 text-gray-400">
+					<p class="text-lg">No reviews yet</p>
+					<p class="text-sm mt-1">Be the first to share your experience</p>
+				</div>
+			} else {
+				<div class="space-y-4">
+					for _, r := range data.Reviews {
+						<div class="bg-white rounded-xl border border-gray-200 p-6">
+							<div class="flex items-center justify-between mb-3">
+								<span class="font-semibold text-gray-900">{ r.Author }</span>
+								<div class="flex items-center gap-1">
+									for i := 0; i < r.Rating; i++ {
+										<span class="text-yellow-400 text-sm">★</span>
+									}
+									for i := r.Rating; i < 5; i++ {
+										<span class="text-gray-300 text-sm">★</span>
+									}
+								</div>
+							</div>
+							<p class="text-gray-600 leading-relaxed">{ r.Body }</p>
+						</div>
+					}
+				</div>
+			}
+			<div data-island="Reviews" data-island-props={ fmt.Sprintf(`{"productId":"%s"}`, data.Product.Id) } class="hidden"></div>
+		</section>
+	</main>
+}

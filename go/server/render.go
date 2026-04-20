@@ -12,10 +12,10 @@ import (
 	"github.com/a-h/templ"
 )
 
-// RenderPage renders a templ component to w, injecting __REGOX_STATE__ before </body>.
-// If data is nil, no state script is injected.
+// RenderPage renders a templ component to w, injecting __REGOX_STATE__ and any
+// extraHTML before </body>. If data is nil, no state script is injected.
 // Returns an error if data is non-nil and the HTML has no </body> tag.
-func RenderPage(w http.ResponseWriter, component templ.Component, data any) error {
+func RenderPage(w http.ResponseWriter, component templ.Component, data any, extraHTML ...string) error {
 	var buf bytes.Buffer
 	if err := component.Render(context.Background(), &buf); err != nil {
 		return fmt.Errorf("render: %w", err)
@@ -23,6 +23,7 @@ func RenderPage(w http.ResponseWriter, component templ.Component, data any) erro
 
 	html := buf.String()
 
+	inject := strings.Join(extraHTML, "\n")
 	if data != nil {
 		stateJSON, err := json.Marshal(data)
 		if err != nil {
@@ -35,7 +36,11 @@ func RenderPage(w http.ResponseWriter, component templ.Component, data any) erro
 			`<script id="__REGOX_STATE__" type="application/json">%s</script>`,
 			string(stateJSON),
 		)
-		html = strings.Replace(html, "</body>", script+"</body>", 1)
+		inject = script + inject
+	}
+
+	if inject != "" {
+		html = strings.Replace(html, "</body>", inject+"</body>", 1)
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

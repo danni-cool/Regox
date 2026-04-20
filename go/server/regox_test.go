@@ -74,6 +74,26 @@ func TestLoadManifest_ISR(t *testing.T) {
 	}
 }
 
+func TestLoadManifest_MainScript(t *testing.T) {
+	dir := t.TempDir()
+	content := `{
+		"pages": {},
+		"islandChunks": {},
+		"mainScript": "/assets/index-ABC123.js"
+	}`
+	path := filepath.Join(dir, "manifest.json")
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test manifest: %v", err)
+	}
+	m, err := server.LoadManifest(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if m.MainScript != "/assets/index-ABC123.js" {
+		t.Errorf("expected MainScript=/assets/index-ABC123.js, got %q", m.MainScript)
+	}
+}
+
 func TestLoadManifest_FileNotFound(t *testing.T) {
 	_, err := server.LoadManifest("/nonexistent/path/manifest.json")
 	if err == nil {

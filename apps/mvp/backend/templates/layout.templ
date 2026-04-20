@@ -6,10 +6,42 @@ templ Layout(title string) {
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
-			<title>{ title }</title>
+			<title>
+				if title != "" {
+					{ title } – Regox Shop
+				} else {
+					Regox Shop
+				}
+			</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<style type="text/tailwindcss">
+				@layer base {
+					body { @apply bg-gray-50 text-gray-900; }
+				}
+			</style>
 		</head>
-		<body>
-			{ children... }
+		<body class="min-h-screen flex flex-col">
+			<nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+				<div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+					<a href="/" class="text-xl font-bold text-indigo-600 tracking-tight">Regox Shop</a>
+					<div class="flex items-center gap-6 text-sm font-medium text-gray-600">
+						<a href="/products" class="hover:text-indigo-600 transition-colors">Products</a>
+						<a href="/news" class="hover:text-indigo-600 transition-colors">News</a>
+						<a href="/cart" class="relative hover:text-indigo-600 transition-colors">
+							<span>Cart</span>
+							<div data-island="CartBadge" class="inline-block ml-1"></div>
+						</a>
+					</div>
+				</div>
+			</nav>
+			<div class="flex-1">
+				{ children... }
+			</div>
+			<footer class="bg-white border-t border-gray-200 mt-16">
+				<div class="max-w-6xl mx-auto px-6 py-8 text-center text-sm text-gray-400">
+					© 2026 Regox Shop — built with Regox framework
+				</div>
+			</footer>
 		</body>
 	</html>
 }

@@ -1,0 +1,19 @@
+package templates
+
+import (
+	"regox.dev/mvp/generated"
+)
+
+templ NewsDetailPage(data generated.NewsDetailPageData) {
+	<main class="max-w-3xl mx-auto px-6 py-12">
+		<a href="/news" class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 text-sm font-medium mb-8 transition-colors">
+			← Back to News
+		</a>
+		<article>
+			<p class="text-sm text-gray-400 font-medium mb-3">{ data.NewsItem.PublishedAt.Format("2 January 2006") }</p>
+			<h1 class="text-4xl font-bold text-gray-900 leading-tight">{ data.NewsItem.Title }</h1>
+			<p class="text-xl text-gray-500 mt-4 leading-relaxed border-l-4 border-indigo-200 pl-4">{ data.NewsItem.Summary }</p>
+			<div class="mt-8 text-gray-700 leading-relaxed text-lg whitespace-pre-line">{ data.NewsItem.Body }</div>
+		</article>
+	</main>
+}

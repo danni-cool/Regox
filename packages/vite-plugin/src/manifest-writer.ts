@@ -11,16 +11,19 @@ interface ManifestPage {
 interface Manifest {
   pages: Record<string, ManifestPage>
   islandChunks: Record<string, string>
+  mainScript?: string
 }
 
 export function writeManifest(
   pages: PageMeta[],
   islandMaps: Map<string, IslandMap>,
   outDir: string,
+  mainScript?: string,
 ): void {
   const manifest: Manifest = {
     pages: {},
     islandChunks: {},
+    ...(mainScript ? { mainScript } : {}),
   }
 
   for (const page of pages) {

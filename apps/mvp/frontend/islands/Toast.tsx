@@ -15,7 +15,7 @@ export default function Toast() {
 
   useEvent<CartUpdatedEvent>('cart:updated', ({ productName, quantity }) => {
     const id = ++nextId
-    setToasts(prev => [...prev, { id, text: `Added ${quantity}× ${productName} to cart` }])
+    setToasts(prev => [...prev, { id, text: `✓ Added ${quantity}× ${productName} to cart` }])
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id))
     }, 3000)
@@ -24,9 +24,12 @@ export default function Toast() {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed bottom-4 right-4 space-y-2 z-50">
+    <div className="fixed bottom-6 right-6 space-y-3 z-50">
       {toasts.map(t => (
-        <div key={t.id} className="bg-gray-900 text-white text-sm rounded px-4 py-2 shadow-lg">
+        <div
+          key={t.id}
+          className="bg-gray-900 text-white text-sm rounded-xl px-5 py-3 shadow-2xl flex items-center gap-2 animate-in"
+        >
           {t.text}
         </div>
       ))}

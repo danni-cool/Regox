@@ -3,11 +3,11 @@ package server
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-
 	"strings"
 
 	"github.com/a-h/templ"
@@ -50,6 +50,15 @@ func NewRouter(manifest *Manifest) *Router {
 	}
 }
 
+// islandScript returns the <script> tag that loads the island bundle, if
+// the manifest specifies a mainScript. Empty string otherwise.
+func (r *Router) islandScript() string {
+	if r.manifest == nil || r.manifest.MainScript == "" {
+		return ""
+	}
+	return fmt.Sprintf(`<script type="module" src="%s"></script>`, r.manifest.MainScript)
+}
+
 func (r *Router) SetLayout(fn func(title string) templ.Component) {
 	r.layout = fn
 }
@@ -70,7 +79,7 @@ func (r *Router) SSR(pattern string, page PageFunc, resolver ResolverFunc) {
 		if r.layout != nil {
 			comp = r.wrapLayout(extractTitle(data), comp)
 		}
-		if err := RenderPage(w, comp, data); err != nil {
+		if err := RenderPage(w, comp, data, r.islandScript()); err != nil {
 			log.Printf("[regox] render error: %v", err)
 		}
 	})
@@ -195,13 +204,24 @@ func (r *Router) renderToBytes(ctx context.Context, page PageFunc, resolver Reso
 		return nil, err
 	}
 	if r.layout != nil {
-		comp = r.wrapLayout("", comp)
+		comp = r.wrapLayout(extractTitle(data), comp)
 	}
 	var buf bytes.Buffer
 	if err := comp.Render(ctx, &buf); err != nil {
 		return nil, fmt.Errorf("render: %w", err)
 	}
-	return buf.Bytes(), nil
+	html := buf.String()
+
+	stateJSON, err := json.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("marshal state: %w", err)
+	}
+	stateScript := fmt.Sprintf(`<script id="__REGOX_STATE__" type="application/json">%s</script>`, stateJSON)
+	inject := stateScript + r.islandScript()
+	if strings.Contains(html, "</body>") {
+		html = strings.Replace(html, "</body>", inject+"</body>", 1)
+	}
+	return []byte(html), nil
 }
 
 func (r *Router) wrapLayout(title string, inner templ.Component) templ.Component {

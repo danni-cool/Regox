@@ -1,0 +1,36 @@
+package templates
+
+import (
+	"fmt"
+	"regox.dev/mvp/generated"
+)
+
+templ ProductListPage(data generated.ProductsPageData) {
+	<main class="max-w-6xl mx-auto px-6 py-12">
+		<div class="mb-8">
+			<h1 class="text-3xl font-bold text-gray-900">All Products</h1>
+			<p class="text-gray-500 mt-1">{ fmt.Sprintf("%d products available", len(data.Products)) }</p>
+		</div>
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+			for _, p := range data.Products {
+				<a href={ templ.SafeURL("/products/" + p.Id) } class="group block bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-200">
+					<div class="aspect-square overflow-hidden bg-gray-100">
+						<img src={ p.ImageURL } alt={ p.Name } class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
+					</div>
+					<div class="p-4">
+						<span class="text-xs font-medium text-indigo-500 uppercase tracking-wide">{ p.Category }</span>
+						<h3 class="font-semibold text-gray-900 mt-1 mb-1 line-clamp-2">{ p.Name }</h3>
+						<div class="flex items-center justify-between mt-2">
+							<p class="text-lg font-bold text-gray-900">${ fmt.Sprintf("%.2f", float64(p.Price)) }</p>
+							if p.Stock == 0 {
+								<span class="text-xs text-red-500 font-medium bg-red-50 px-2 py-0.5 rounded-full">Out of stock</span>
+							} else {
+								<span class="text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full">In stock</span>
+							}
+						</div>
+					</div>
+				</a>
+			}
+		</div>
+	</main>
+}

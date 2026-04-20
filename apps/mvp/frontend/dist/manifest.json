@@ -4,8 +4,12 @@
       "mode": "csr",
       "islands": []
     },
-    "/": {
+    "/cart": {
       "mode": "csr",
+      "islands": []
+    },
+    "/": {
+      "mode": "ssr",
       "islands": []
     },
     "/product/[id]": {
@@ -14,11 +18,21 @@
         "CartButton"
       ]
     },
+    "/products/[id]": {
+      "mode": "ssr",
+      "islands": []
+    },
+    "/products": {
+      "mode": "isr",
+      "islands": [],
+      "revalidate": 60
+    },
     "/shop": {
       "mode": "isr",
       "islands": [],
       "revalidate": 300
     }
   },
-  "islandChunks": {}
+  "islandChunks": {},
+  "mainScript": "/assets/index-RQjVk0yp.js"
 }

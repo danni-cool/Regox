@@ -29,7 +29,7 @@ func NotFound() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main><h1>404 — Page Not Found</h1><p>The page you&#39;re looking for doesn&#39;t exist.</p></main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main class=\"max-w-2xl mx-auto px-6 py-32 text-center\"><p class=\"text-8xl font-bold text-indigo-200\">404</p><h1 class=\"text-2xl font-bold text-gray-900 mt-4\">Page Not Found</h1><p class=\"text-gray-500 mt-2\">The page you&#39;re looking for doesn&#39;t exist.</p><a href=\"/\" class=\"inline-block mt-8 px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors\">Go Home</a></main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

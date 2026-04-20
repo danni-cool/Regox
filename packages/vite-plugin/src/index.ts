@@ -42,6 +42,13 @@ export function regox(config: RegoxConfig): Plugin {
       }
 
       for (const page of ssrPages) {
+        // Skip if a hand-written templ file already exists for this route.
+        // The JSX compiler only generates stubs; hand-written files take priority.
+        if (fs.existsSync(page.templPath)) {
+          console.log(`[regox] skip compile (hand-written templ exists): ${path.relative(process.cwd(), page.templPath)}`)
+          continue
+        }
+
         const source = fs.readFileSync(page.filePath, 'utf-8')
         const islandMap = islandMaps.get(page.route) ?? new Map()
 
@@ -93,7 +100,16 @@ export function regox(config: RegoxConfig): Plugin {
     closeBundle() {
       if (!pendingManifest) return
       const distDir = path.resolve('frontend/dist')
-      writeManifest(pendingManifest.pages, pendingManifest.islandMaps, distDir)
+
+      // Extract the hashed main JS chunk URL from Vite's built index.html
+      let mainScript: string | undefined
+      try {
+        const indexHtml = fs.readFileSync(path.join(distDir, 'index.html'), 'utf-8')
+        const match = indexHtml.match(/src="(\/assets\/[^"]+\.js)"/)
+        if (match) mainScript = match[1]
+      } catch { /* dev mode or pre-build — skip */ }
+
+      writeManifest(pendingManifest.pages, pendingManifest.islandMaps, distDir, mainScript)
       console.log(`[regox] manifest written: frontend/dist/manifest.json (${pendingManifest.pages.length} pages)`)
       pendingManifest = null
     },

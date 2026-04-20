@@ -144,6 +144,22 @@ func layoutWithTitle(title string) templ.Component {
 	})
 }
 
+func TestRouter_SSR_InjectsMainScript(t *testing.T) {
+	m := makeManifest(map[string]server.PageEntry{"/p": {Mode: "ssr"}})
+	m.MainScript = "/assets/index-TEST.js"
+	router := server.NewRouter(m)
+	router.SSR("/p", echoPage("hello"), okResolver)
+
+	req := httptest.NewRequest("GET", "/p", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	body := w.Body.String()
+	if !strings.Contains(body, `src="/assets/index-TEST.js"`) {
+		t.Errorf("expected main script tag in SSR response, got: %s", body)
+	}
+}
+
 func TestRouter_SSR_TitlerInterface_InjectsTitle(t *testing.T) {
 	m := makeManifest(map[string]server.PageEntry{"/product": {Mode: "ssr"}})
 	router := server.NewRouter(m)

@@ -1,0 +1,26 @@
+package templates
+
+import "fmt"
+import "regox.dev/mvp/generated"
+
+templ ProductPage(data generated.ProductPageData) {
+  <main>
+    <h1>
+      { fmt.Sprint(data.Product.Title) }
+    </h1>
+    <p>
+      { fmt.Sprint(data.Product.Price) }
+    </p>
+    if data.Product.InStock {
+      <span>In Stock</span>
+    } else {
+      <span>Out of Stock</span>
+    }
+    <div
+      data-island="CartButton"
+      data-props={ templ.JSONString(map[string]any{
+        "productId": data.Product.ID,
+      }) }
+    ></div>
+  </main>
+}

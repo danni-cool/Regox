@@ -195,10 +195,7 @@ function emitExpression(expr: t.Expression, indent: string, ctx: EmitCtx): strin
   if (t.isCallExpression(expr)) return emitCallExpr(expr, indent, ctx)
 
   if (t.isTemplateLiteral(expr)) {
-    throw new CompileError(
-      `template literal not supported in SSR templates — convert to string concatenation in resolver`,
-      ctx.filePath,
-    )
+    return `${'  '.repeat(indent.length / 2)}{ ${emitTemplateLiteral(expr, ctx)} }`
   }
 
   return `${indent}{ fmt.Sprint(${emitGoExpr(expr, ctx)}) }`
@@ -262,8 +259,20 @@ function emitGoExpr(expr: t.Expression, ctx: EmitCtx): string {
   if (t.isStringLiteral(expr)) return `"${expr.value}"`
   if (t.isNumericLiteral(expr)) return String(expr.value)
   if (t.isBooleanLiteral(expr)) return String(expr.value)
+  if (t.isTemplateLiteral(expr)) return emitTemplateLiteral(expr, ctx)
 
   throw new CompileError(`Unsupported expression type: ${expr.type}\nHint: pre-process in resolver`, ctx.filePath)
+}
+
+// Compile a JS template literal to a Go fmt.Sprintf call.
+// `` `/products/${p.id}` `` → `fmt.Sprintf("/products/%v", p.Id)`
+function emitTemplateLiteral(expr: t.TemplateLiteral, ctx: EmitCtx): string {
+  if (expr.expressions.length === 0) {
+    return `"${expr.quasis[0].value.cooked ?? expr.quasis[0].value.raw}"`
+  }
+  const fmt = expr.quasis.map(q => q.value.cooked ?? q.value.raw).join('%v')
+  const args = expr.expressions.map(e => emitGoExpr(e as t.Expression, ctx)).join(', ')
+  return `fmt.Sprintf("${fmt}", ${args})`
 }
 
 function flattenMember(expr: t.MemberExpression, ctx: EmitCtx): string[] {
