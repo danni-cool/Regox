@@ -13,7 +13,7 @@ export default function ProductDetailPage() {
 
   if (!data) return null
 
-  const { product, reviews } = data
+  const { product } = data
 
   return (
     <div className="max-w-3xl mx-auto p-6">

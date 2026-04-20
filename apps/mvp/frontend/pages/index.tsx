@@ -2,7 +2,6 @@ import type { RegoxPageConfig } from '../regox.d'
 import type { components } from '../generated/types'
 import { useResolverData } from '@regox/client'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/ui/card'
-import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 
 export const regox: RegoxPageConfig = { mode: 'ssr' }
