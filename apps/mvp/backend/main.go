@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/a-h/templ"
+	"regox.dev/mvp/api"
 	"regox.dev/mvp/generated"
 	"regox.dev/mvp/resolvers"
 	"regox.dev/mvp/store"
@@ -40,6 +41,15 @@ func main() {
 
 	assetsFS := http.FileServer(http.Dir("../frontend/dist/assets"))
 	r.Static("/assets/", assetsFS)
+
+	// API sub-mux (StripPrefix removes /api so handlers use bare paths)
+	apiMux := http.NewServeMux()
+	api.RegisterReviewsHandler(apiMux, s)
+	api.RegisterCartHandler(apiMux, s)
+	api.RegisterOrdersHandler(apiMux, s)
+	api.RegisterProductsAPIHandler(apiMux, s)
+	api.RegisterNewsAPIHandler(apiMux, s)
+	r.Static("/api/", http.StripPrefix("/api", apiMux))
 
 	// Pages — Batch 1
 	r.SSR("/", func(ctx context.Context, data any) (templ.Component, error) {
