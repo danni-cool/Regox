@@ -9,7 +9,9 @@ templ Layout(title string, stylesheet string) {
 			<title>
 				{ title }
 			</title>
-			<link rel="stylesheet" href={ stylesheet }/>
+			if stylesheet != "" {
+				<link rel="stylesheet" href={ stylesheet }/>
+			}
 			<script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark')})()</script>
 		</head>
 		<body class="min-h-screen flex flex-col bg-background text-foreground">

@@ -42,7 +42,7 @@ export default function Layout({ children, title = 'App', stylesheet = '' }) {
     expect(out).toContain('{ title }')
   })
 
-  it('compiles href={stylesheet} to Go templ href expression', () => {
+  it('compiles href={stylesheet} to conditional Go templ block', () => {
     const src = `
 export default function Layout({ children, title = 'App', stylesheet = '' }) {
   return (
@@ -56,6 +56,7 @@ export default function Layout({ children, title = 'App', stylesheet = '' }) {
 }
 `
     const out = compileLayout(src)
+    expect(out).toContain('if stylesheet != ""')
     expect(out).toContain('<link rel="stylesheet" href={ stylesheet }')
   })
 
@@ -130,6 +131,27 @@ export default function Layout({ children }) {
     const out = compileLayout(src)
     expect(out).toContain('lang="en"')
     expect(out).toContain('class="min-h-screen flex flex-col bg-background text-foreground"')
+  })
+
+  it('resolves dangerouslySetInnerHTML when __html references a top-level const', () => {
+    const src = `
+const SCRIPT = \`(function(){var x=1})()\`
+
+export default function Layout({ children }) {
+  return (
+    <html>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT }} />
+      </head>
+      <body>{children}</body>
+    </html>
+  )
+}
+`
+    const out = compileLayout(src)
+    expect(out).toContain('<script>(function(){var x=1})()</script>')
+    expect(out).not.toContain('SCRIPT')
+    expect(out).not.toContain('dangerouslySetInnerHTML')
   })
 
   it('emits DOCTYPE at top of templ body', () => {

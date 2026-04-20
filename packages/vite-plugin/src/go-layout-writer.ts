@@ -120,6 +120,28 @@ function emitJsx(node: JSXElement | JSXFragment, lines: string[], depth: number,
     return
   }
 
+  // Handle <link rel="stylesheet" href={identifier}> — emit conditional guard
+  if (tagName === 'link') {
+    const rel = extractAttrValue(opening, 'rel')
+    if (rel === 'stylesheet') {
+      const hrefAttr = opening.attributes.find(
+        (a) =>
+          a.type === 'JSXAttribute' &&
+          (a.name as import('@babel/types').JSXIdentifier).name === 'href' &&
+          a.value?.type === 'JSXExpressionContainer' &&
+          (a.value.expression as import('@babel/types').Identifier).type === 'Identifier',
+      )
+      if (hrefAttr && hrefAttr.type === 'JSXAttribute' && hrefAttr.value?.type === 'JSXExpressionContainer') {
+        const identName = (hrefAttr.value.expression as import('@babel/types').Identifier).name
+        const otherAttrs = emitAttributes(opening)
+        lines.push(`${indent(depth)}if ${identName} != "" {`)
+        lines.push(`${indent(depth + 1)}<link${otherAttrs}/>`)
+        lines.push(`${indent(depth)}}`)
+        return
+      }
+    }
+  }
+
   // Handle <script dangerouslySetInnerHTML>
   if (tagName === 'script') {
     const dsi = extractDangerouslySetInnerHTML(opening, consts)
@@ -216,6 +238,9 @@ function emitAttributes(opening: JSXOpeningElement): string {
         parts.push(` ${htmlName}="${(expr as StringLiteral).value}"`)
         continue
       }
+      throw new Error(
+        `go-layout-writer: unsupported JSX attribute expression type "${expr.type}" on attribute "${htmlName}" — only string literals and identifier references are supported in _layout.tsx`
+      )
     }
   }
   return parts.join('')
