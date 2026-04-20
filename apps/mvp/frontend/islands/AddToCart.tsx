@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useCartStore } from '../lib/stores/cart'
-import { useEmit } from '../lib/useEmit'
+import { useEmit } from '@regox/client'
 
 interface AddToCartProps {
   productId: string

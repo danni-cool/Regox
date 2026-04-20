@@ -1,8 +1,5 @@
 import { useSyncExternalStore } from 'react'
 
-// Lightweight cross-Island state store.
-// Scope: 'page' (default) | 'session' | 'persistent'
-
 type Scope = 'page' | 'session' | 'persistent'
 type Listener = () => void
 

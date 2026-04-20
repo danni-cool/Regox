@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useEvent } from '../lib/useEvent'
+import { useEvent } from '@regox/client'
 
 interface ToastMessage {
   id: number

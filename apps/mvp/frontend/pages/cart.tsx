@@ -1,4 +1,4 @@
-import type { RegoxPageConfig } from '../lib/types'
+import type { RegoxPageConfig } from '../regox.d'
 
 export const regox: RegoxPageConfig = { mode: 'csr' }
 

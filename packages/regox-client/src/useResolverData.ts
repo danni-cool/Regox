@@ -1,6 +1,3 @@
-// Reads server-injected data from __REGOX_STATE__ for use as React Query initialData.
-// Returns undefined in CSR context (no __REGOX_STATE__ present).
-
 let resolverData: Record<string, unknown> | null = null
 
 function getResolverData(): Record<string, unknown> {

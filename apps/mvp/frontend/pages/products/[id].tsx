@@ -1,6 +1,6 @@
-import { useResolverData } from '../../lib/useResolverData'
+import { useResolverData } from '@regox/client'
 import type { components } from '../../generated/types'
-import type { RegoxPageConfig } from '../../lib/types'
+import type { RegoxPageConfig } from '../../regox.d'
 
 export const regox: RegoxPageConfig = { mode: 'ssr' }
 

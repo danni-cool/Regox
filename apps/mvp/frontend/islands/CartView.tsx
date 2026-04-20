@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useCartStore } from '../lib/stores/cart'
-import { useEvent } from '../lib/useEvent'
+import { useEvent } from '@regox/client'
 
 type CartUpdatedEvent = { productId: string; quantity: number; productName: string }
 

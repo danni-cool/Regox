@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useSharedState } from '../../lib/useSharedState'
+import { useSharedState } from '@regox/client'
 
 // Each test uses a unique key to avoid cross-test state bleed.
 // stores is a module-level Map; vi.resetModules() does not clear static imports.

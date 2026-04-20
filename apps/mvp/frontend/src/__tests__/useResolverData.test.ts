@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { useResolverData, _resetCacheForTest } from '../../lib/useResolverData'
+import { useResolverData, _resetCacheForTest } from '@regox/client'
 
 beforeEach(() => {
   document.body.innerHTML = ''

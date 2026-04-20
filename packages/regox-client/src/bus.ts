@@ -23,7 +23,6 @@ declare global {
   interface Window { __regox_bus__?: Bus }
 }
 
-// Initialize exactly once, even across multiple module evaluations.
 window.__regox_bus__ ??= createBus()
 
 export const bus = window.__regox_bus__

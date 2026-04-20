@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseRegoxState, countIslandMounts, mountIslands } from '../regox-runtime'
+import { parseRegoxState, countIslandMounts, mountIslands } from '@regox/client/src/runtime'
 
 beforeEach(() => {
   document.body.innerHTML = ''
