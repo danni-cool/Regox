@@ -52,7 +52,10 @@ func main() {
 		return templates.ProductListPage(d), nil
 	}, resolvers.NewProductList(s))
 
-	// /products/{id} added in Task 9 (after product_detail.templ is created)
+	r.SSR("/products/{id}", func(ctx context.Context, data any) (templ.Component, error) {
+		d := data.(generated.ProductDetailPageData)
+		return templates.ProductDetailPage(d), nil
+	}, resolvers.NewProductDetail(s))
 
 	r.CSR("/cart", string(shell))
 
