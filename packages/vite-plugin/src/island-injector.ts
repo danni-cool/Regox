@@ -4,14 +4,25 @@ export function generateIslandInjectionScript(islandMap: IslandMap, bundleUrl: s
   const _islandNames = Array.from(islandMap.keys())
 
   return `
+<script type="application/json" id="__REGOX_STATE__">{}</script>
 <script type="module">
-  window.__regox_islands__ = window.__regox_islands__ || {};
-  window.__regox_bus__ = window.__regox_bus__;
+  // Initialize event bus
+  const listeners = {};
+  window.__regox_bus__ = {
+    emit(key, payload) {
+      (listeners[key] || []).forEach(cb => cb(payload));
+    },
+    on(key, cb) {
+      listeners[key] = listeners[key] || [];
+      listeners[key].push(cb);
+      return () => { listeners[key] = listeners[key].filter(fn => fn !== cb); };
+    },
+  };
 
   function mountIslands() {
     document.querySelectorAll('[data-island]').forEach(el => {
       const name = el.dataset.island;
-      const factory = window.__regox_islands__[name];
+      const factory = window.__regox_islands__?.[name];
       if (!factory) return;
       const props = el.dataset.islandProps ? JSON.parse(el.dataset.islandProps) : {};
       factory(el, props);

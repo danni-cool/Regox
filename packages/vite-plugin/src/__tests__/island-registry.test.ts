@@ -5,7 +5,7 @@ describe('generateIslandRegistration', () => {
   it('generates window assignment for a named island', () => {
     const result = generateIslandRegistration('CartButton')
     expect(result).toContain(`window.__regox_islands__ ??= {}`)
-    expect(result).toContain(`window.__regox_islands__['CartButton'] = CartButton`)
+    expect(result).toContain(`window.__regox_islands__['CartButton'] = (el, props) => {`)
   })
 
   it('generates unique variable name for each island', () => {
