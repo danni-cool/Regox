@@ -17,7 +17,7 @@ func ProductPage(ctx context.Context, r *http.Request) (any, error) {
 		Product: generated.Product{
 			ID:      id,
 			Title:   "Product " + id,
-			Price:   "$99.00",
+			Price:   99.00,
 			InStock: true,
 		},
 	}, nil
