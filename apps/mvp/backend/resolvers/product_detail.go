@@ -29,6 +29,7 @@ func NewProductDetail(s *store.Store) func(context.Context, *http.Request) (any,
 				Category:    p.Category,
 				Stock:       p.Stock,
 			},
+			Reviews: toGenReviews(s.ListReviews(id)),
 		}, nil
 	}
 }

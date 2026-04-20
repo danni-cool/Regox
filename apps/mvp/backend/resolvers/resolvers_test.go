@@ -60,4 +60,10 @@ func TestProductDetail(t *testing.T) {
 	if pageData.Product.Id == "" {
 		t.Fatal("product ID should not be empty")
 	}
+	if len(pageData.Reviews) != 2 {
+		t.Fatalf("expected 2 reviews in page data, got %d", len(pageData.Reviews))
+	}
+	if pageData.Reviews[0].Author == "" {
+		t.Fatal("review author should not be empty")
+	}
 }

@@ -123,6 +123,43 @@ func TestRouter_NotFound_Custom(t *testing.T) {
 	}
 }
 
+// titledData implements server.Titler to provide a dynamic page title.
+type titledData struct{ name string }
+
+func (d titledData) Title() string { return d.name }
+
+func titledResolver(ctx context.Context, r *http.Request) (any, error) {
+	return titledData{name: "Widget Pro"}, nil
+}
+
+func layoutWithTitle(title string) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		inner := templ.GetChildren(ctx)
+		fmt.Fprintf(w, "<html><head><title>%s</title></head><body>", title)
+		if inner != nil {
+			inner.Render(ctx, w) //nolint:errcheck
+		}
+		fmt.Fprintf(w, "</body></html>")
+		return nil
+	})
+}
+
+func TestRouter_SSR_TitlerInterface_InjectsTitle(t *testing.T) {
+	m := makeManifest(map[string]server.PageEntry{"/product": {Mode: "ssr"}})
+	router := server.NewRouter(m)
+	router.SetLayout(layoutWithTitle)
+	router.SSR("/product", echoPage("product body"), titledResolver)
+
+	req := httptest.NewRequest("GET", "/product", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	body := w.Body.String()
+	if !strings.Contains(body, "<title>Widget Pro</title>") {
+		t.Errorf("expected <title>Widget Pro</title> in response, got: %s", body)
+	}
+}
+
 func TestRouter_ISR_CacheMiss(t *testing.T) {
 	m := makeManifest(map[string]server.PageEntry{
 		"/shop": {Mode: "isr", Revalidate: 60},

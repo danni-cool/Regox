@@ -52,6 +52,21 @@ func toGenProducts(products []store.Product) []generated.Product {
 	return out
 }
 
+func toGenReviews(reviews []store.Review) []generated.Review {
+	out := make([]generated.Review, len(reviews))
+	for i, r := range reviews {
+		out[i] = generated.Review{
+			Id:        r.ID,
+			ProductID: r.ProductID,
+			Author:    r.Author,
+			Rating:    r.Rating,
+			Body:      r.Body,
+			CreatedAt: r.CreatedAt,
+		}
+	}
+	return out
+}
+
 func toGenNews(news []store.NewsItem) []generated.NewsItem {
 	out := make([]generated.NewsItem, len(news))
 	for i, n := range news {

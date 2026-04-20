@@ -27,7 +27,22 @@ templ ProductDetailPage(data generated.ProductDetailPageData) {
 		</div>
 		<section class="mt-12">
 			<h2 class="text-xl font-semibold mb-4">Customer Reviews</h2>
-			<div data-island="Reviews" data-island-props={ fmt.Sprintf(`{"productId":"%s"}`, data.Product.Id) }></div>
+			if len(data.Reviews) == 0 {
+				<p class="text-gray-500 text-sm">No reviews yet.</p>
+			} else {
+				<div class="space-y-4">
+					for _, r := range data.Reviews {
+						<div class="border rounded p-4">
+							<div class="flex items-center justify-between mb-1">
+								<span class="font-medium">{ r.Author }</span>
+								<span class="text-yellow-500">{ fmt.Sprintf("%d/5", r.Rating) }</span>
+							</div>
+							<p class="text-gray-700 text-sm">{ r.Body }</p>
+						</div>
+					}
+				</div>
+			}
+			<div data-island="Reviews" data-island-props={ fmt.Sprintf(`{"productId":"%s"}`, data.Product.Id) } class="hidden"></div>
 		</section>
 		<div data-island="CartBadge"></div>
 	</main>

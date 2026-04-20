@@ -17,6 +17,20 @@ type PageFunc func(context.Context, any) (templ.Component, error)
 type ResolverFunc func(context.Context, *http.Request) (any, error)
 type ErrorResolverFunc func(context.Context, *http.Request, error) (any, error)
 
+// Titler is an optional interface page data structs can implement to supply a
+// dynamic <title> to the layout. If data does not implement Titler, the layout
+// receives an empty string.
+type Titler interface {
+	Title() string
+}
+
+func extractTitle(data any) string {
+	if t, ok := data.(Titler); ok {
+		return t.Title()
+	}
+	return ""
+}
+
 type Router struct {
 	mux          *http.ServeMux
 	manifest     *Manifest
@@ -54,7 +68,7 @@ func (r *Router) SSR(pattern string, page PageFunc, resolver ResolverFunc) {
 			return
 		}
 		if r.layout != nil {
-			comp = r.wrapLayout("", comp)
+			comp = r.wrapLayout(extractTitle(data), comp)
 		}
 		if err := RenderPage(w, comp, data); err != nil {
 			log.Printf("[regox] render error: %v", err)

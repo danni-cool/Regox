@@ -69,7 +69,8 @@ type Product struct {
 
 // ProductDetailPageData defines model for ProductDetailPageData.
 type ProductDetailPageData struct {
-	Product Product `json:"product"`
+	Product Product  `json:"product"`
+	Reviews []Review `json:"reviews"`
 }
 
 // ProductsPageData defines model for ProductsPageData.

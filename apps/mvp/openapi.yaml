@@ -353,10 +353,14 @@ components:
 
     ProductDetailPageData:
       type: object
-      required: [product]
+      required: [product, reviews]
       properties:
         product:
           $ref: "#/components/schemas/Product"
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/Review"
 
     NewsPageData:
       type: object
