@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
 
 interface Review {
   id: string
@@ -26,23 +28,25 @@ export default function Reviews({ productId }: ReviewsProps) {
   }, [productId])
 
   if (loading) {
-    return <p className="text-gray-400 text-sm">Loading reviews...</p>
+    return <p className="text-muted-foreground text-sm">Loading reviews...</p>
   }
 
   if (reviews.length === 0) {
-    return <p className="text-gray-500 text-sm">No reviews yet.</p>
+    return <p className="text-muted-foreground text-sm">No reviews yet.</p>
   }
 
   return (
     <div className="space-y-4">
       {reviews.map(r => (
-        <div key={r.id} className="border rounded p-4">
-          <div className="flex items-center justify-between mb-1">
+        <Card key={r.id}>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <span className="font-medium">{r.author}</span>
-            <span className="text-yellow-500">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
-          </div>
-          <p className="text-gray-700 text-sm">{r.body}</p>
-        </div>
+            <Badge variant="secondary">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</Badge>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{r.body}</p>
+          </CardContent>
+        </Card>
       ))}
     </div>
   )

@@ -1,4 +1,5 @@
 import { useCartStore } from '../lib/stores/cart'
+import { Badge } from '../components/ui/badge'
 
 export default function CartBadge() {
   const totalCount = useCartStore(s => s.totalCount)
@@ -6,8 +7,8 @@ export default function CartBadge() {
   if (totalCount === 0) return null
 
   return (
-    <span className="bg-indigo-600 text-white text-xs font-bold rounded-full w-5 h-5 inline-flex items-center justify-center">
+    <Badge variant="default" className="h-5 w-5 p-0 flex items-center justify-center text-xs">
       {totalCount}
-    </span>
+    </Badge>
   )
 }

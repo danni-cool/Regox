@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useCartStore } from '../lib/stores/cart'
 import { useEvent } from '@regox/client'
+import { Button } from '../components/ui/button'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/ui/card'
+import { Separator } from '../components/ui/separator'
+import { Badge } from '../components/ui/badge'
 
 type CartUpdatedEvent = { productId: string; quantity: number; productName: string }
-
 type CheckoutState = 'idle' | 'processing' | 'success' | 'error'
 
 export default function CartView() {
@@ -29,61 +32,83 @@ export default function CartView() {
 
   if (checkoutState === 'success') {
     return (
-      <div className="text-center py-12">
-        <p className="text-2xl font-bold text-green-600">Order placed!</p>
-        <p className="text-gray-600 mt-2">Thank you for your purchase.</p>
-        <a href="/products" className="mt-6 inline-block text-blue-600 hover:underline">Continue shopping</a>
-      </div>
+      <Card className="max-w-md mx-auto mt-12 text-center">
+        <CardContent className="py-12">
+          <p className="text-2xl font-bold text-green-600">Order placed!</p>
+          <p className="text-muted-foreground mt-2">Thank you for your purchase.</p>
+          <Button variant="link" className="mt-6" asChild>
+            <a href="/products">Continue shopping</a>
+          </Button>
+        </CardContent>
+      </Card>
     )
   }
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500 text-lg">Your cart is empty.</p>
-        <a href="/products" className="mt-4 inline-block text-blue-600 hover:underline">Browse products</a>
-      </div>
+      <Card className="max-w-md mx-auto mt-12 text-center">
+        <CardContent className="py-12">
+          <p className="text-muted-foreground">Your cart is empty.</p>
+          <Button variant="link" className="mt-4" asChild>
+            <a href="/products">Browse products</a>
+          </Button>
+        </CardContent>
+      </Card>
     )
   }
 
+  const total = items.reduce((sum, item) => sum + ((item as any).price ?? 0) * item.quantity, 0)
+
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Your Cart ({totalCount} items)</h1>
-      <div className="space-y-4">
-        {items.map(item => (
-          <div key={item.productId} className="flex items-center justify-between border rounded p-4">
-            <div>
-              <p className="font-medium">{item.productId}</p>
-              <p className="text-gray-500 text-sm">Qty: {item.quantity}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => updateItem(item.productId, Math.max(1, item.quantity - 1))}
-                className="px-2 py-1 border rounded hover:bg-gray-100"
-              >−</button>
-              <span className="w-8 text-center">{item.quantity}</span>
-              <button
-                onClick={() => updateItem(item.productId, item.quantity + 1)}
-                className="px-2 py-1 border rounded hover:bg-gray-100"
-              >+</button>
-              <button
-                onClick={() => removeItem(item.productId)}
-                className="ml-2 text-red-500 hover:text-red-700 text-sm"
-              >Remove</button>
+    <Card className="max-w-2xl mx-auto mt-8">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          Cart
+          <Badge variant="secondary">{totalCount}</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {items.map((item, i) => (
+          <div key={item.productId}>
+            {i > 0 && <Separator className="mb-4" />}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">{(item as any).name ?? item.productId}</p>
+                <p className="text-sm text-muted-foreground">
+                  {(item as any).price != null
+                    ? `$${(item as any).price.toFixed(2)} × ${item.quantity}`
+                    : `Qty: ${item.quantity}`}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {(item as any).price != null && (
+                  <span className="font-semibold">${((item as any).price * item.quantity).toFixed(2)}</span>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeItem(item.productId)}
+                  aria-label="Remove item"
+                >
+                  ×
+                </Button>
+              </div>
             </div>
           </div>
         ))}
-      </div>
+      </CardContent>
+      <CardFooter className="flex items-center justify-between">
+        <p className="text-lg font-bold">Total: ${total.toFixed(2)}</p>
+        <Button
+          onClick={handleCheckout}
+          disabled={checkoutState === 'processing'}
+        >
+          {checkoutState === 'processing' ? 'Processing...' : 'Checkout'}
+        </Button>
+      </CardFooter>
       {checkoutState === 'error' && (
-        <p className="text-red-500 text-sm mt-4">Checkout failed. Please try again.</p>
+        <p className="px-6 pb-4 text-sm text-destructive">Checkout failed. Please try again.</p>
       )}
-      <button
-        onClick={handleCheckout}
-        disabled={checkoutState === 'processing'}
-        className="mt-6 w-full bg-blue-600 text-white rounded py-3 hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {checkoutState === 'processing' ? 'Processing...' : 'Place Order'}
-      </button>
-    </div>
+    </Card>
   )
 }

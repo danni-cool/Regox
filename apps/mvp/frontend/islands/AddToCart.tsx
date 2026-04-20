@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useCartStore } from '../lib/stores/cart'
 import { useEmit } from '@regox/client'
+import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
 
 interface AddToCartProps {
   productId: string
@@ -36,28 +38,38 @@ export default function AddToCart({ productId, productName, price }: AddToCartPr
 
   return (
     <div className="flex items-center gap-4">
-      <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden">
-        <button
+      <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => setQty(q => Math.max(1, q - 1))}
-          className="px-4 py-3 text-gray-600 hover:bg-gray-50 font-bold text-lg transition-colors"
+          aria-label="Decrease quantity"
         >
           −
-        </button>
-        <span className="px-5 py-3 font-semibold text-gray-900 min-w-[3rem] text-center">{qty}</span>
-        <button
+        </Button>
+        <Input
+          type="number"
+          value={qty}
+          onChange={e => setQty(Math.max(1, parseInt(e.target.value) || 1))}
+          className="w-16 text-center"
+          min={1}
+        />
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => setQty(q => q + 1)}
-          className="px-4 py-3 text-gray-600 hover:bg-gray-50 font-bold text-lg transition-colors"
+          aria-label="Increase quantity"
         >
           +
-        </button>
+        </Button>
       </div>
-      <button
+      <Button
         onClick={handleAdd}
         disabled={isPosting}
-        className="flex-1 bg-indigo-600 text-white rounded-xl py-3 px-8 font-semibold hover:bg-indigo-700 active:bg-indigo-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
+        className="flex-1"
       >
         {isPosting ? 'Adding...' : `Add to Cart — $${(price * qty).toFixed(2)}`}
-      </button>
+      </Button>
     </div>
   )
 }
