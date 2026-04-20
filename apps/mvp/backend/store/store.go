@@ -6,49 +6,49 @@ import (
 )
 
 type Product struct {
-	ID          string
-	Name        string
-	Price       float64
-	Description string
-	ImageURL    string
-	Category    string
-	Stock       int
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Price       float64 `json:"price"`
+	Description string  `json:"description"`
+	ImageURL    string  `json:"imageURL"`
+	Category    string  `json:"category"`
+	Stock       int     `json:"stock"`
 }
 
 type Review struct {
-	ID        string
-	ProductID string
-	Author    string
-	Rating    int
-	Body      string
-	CreatedAt time.Time
+	ID        string    `json:"id"`
+	ProductID string    `json:"productId"`
+	Author    string    `json:"author"`
+	Rating    int       `json:"rating"`
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"publishedAt"`
 }
 
 type NewsItem struct {
-	ID          string
-	Title       string
-	Summary     string
-	Body        string
-	PublishedAt time.Time
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	Summary     string    `json:"summary"`
+	Body        string    `json:"body"`
+	PublishedAt time.Time `json:"publishedAt"`
 }
 
 type CartItem struct {
-	ProductID string
-	Quantity  int
+	ProductID string `json:"productId"`
+	Quantity  int    `json:"quantity"`
 }
 
 type Cart struct {
-	SessionID string
-	Items     []CartItem
-	UpdatedAt time.Time
+	SessionID string     `json:"sessionId"`
+	Items     []CartItem `json:"items"`
+	UpdatedAt time.Time  `json:"updatedAt"`
 }
 
 type Order struct {
-	ID        string
-	SessionID string
-	Items     []CartItem
-	Total     float64
-	Status    string // pending | paid | failed
+	ID        string     `json:"id"`
+	SessionID string     `json:"sessionId"`
+	Items     []CartItem `json:"items"`
+	Total     float64    `json:"total"`
+	Status    string     `json:"status"`
 }
 
 type Store struct {

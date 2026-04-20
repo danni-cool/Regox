@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 
+	"strings"
+
 	"github.com/a-h/templ"
 )
 
@@ -95,6 +97,12 @@ func (r *Router) ISR(pattern string, page PageFunc, resolver ResolverFunc) {
 
 func (r *Router) Static(prefix string, handler http.Handler) {
 	r.mux.Handle(prefix, http.StripPrefix(prefix, handler))
+}
+
+// Mount registers a sub-handler under prefix, stripping the prefix (without trailing slash)
+// so the sub-handler receives paths starting with "/".
+func (r *Router) Mount(prefix string, handler http.Handler) {
+	r.mux.Handle(prefix, http.StripPrefix(strings.TrimSuffix(prefix, "/"), handler))
 }
 
 func (r *Router) CSR(pattern string, shell string) {

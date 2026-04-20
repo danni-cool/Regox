@@ -49,7 +49,7 @@ func main() {
 	api.RegisterOrdersHandler(apiMux, s)
 	api.RegisterProductsAPIHandler(apiMux, s)
 	api.RegisterNewsAPIHandler(apiMux, s)
-	r.Static("/api/", http.StripPrefix("/api", apiMux))
+	r.Mount("/api/", apiMux)
 
 	// Pages — Batch 1
 	r.SSR("/", func(ctx context.Context, data any) (templ.Component, error) {
