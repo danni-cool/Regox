@@ -93,6 +93,10 @@ func (r *Router) ISR(pattern string, page PageFunc, resolver ResolverFunc) {
 	})
 }
 
+func (r *Router) Static(prefix string, handler http.Handler) {
+	r.mux.Handle(prefix, http.StripPrefix(prefix, handler))
+}
+
 func (r *Router) CSR(pattern string, shell string) {
 	r.mux.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")

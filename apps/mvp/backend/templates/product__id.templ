@@ -9,7 +9,7 @@ templ ProductPage(data generated.ProductPageData) {
       { fmt.Sprint(data.Product.Title) }
     </h1>
     <p>
-      { fmt.Sprintf("$%.2f", data.Product.Price) }
+      { fmt.Sprint(data.Product.Price) }
     </p>
     if data.Product.InStock {
       <span>In Stock</span>

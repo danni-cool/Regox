@@ -8,6 +8,9 @@ export default defineConfig({
     react(),
     regox(regoxConfig),
   ],
+  build: {
+    outDir: 'frontend/dist',
+  },
   base: process.env.REGOX_CDN_URL ?? '/',
   server: {
     port: regoxConfig.dev?.port ?? 5173,

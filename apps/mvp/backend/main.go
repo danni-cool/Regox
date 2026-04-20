@@ -33,6 +33,10 @@ func main() {
 		return templates.Layout(title)
 	})
 
+	// Serve built assets (JS, CSS, images) from frontend/dist
+	assetsFS := http.FileServer(http.Dir("../frontend/dist/assets"))
+	r.Static("/assets/", assetsFS)
+
 	r.SSR("/product/{id}", func(ctx context.Context, data any) (templ.Component, error) {
 		d := data.(generated.ProductPageData)
 		return templates.ProductPage(d), nil

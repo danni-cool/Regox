@@ -11,7 +11,7 @@ templ ShopPage(data generated.ShopPageData) {
         <li>
           { fmt.Sprint(p.Title) }
           —
-          { fmt.Sprintf("$%.2f", p.Price) }
+          { fmt.Sprint(p.Price) }
           if !p.InStock {
             <span>(Out of Stock)</span>
           }

@@ -11,6 +11,7 @@ import { generateIslandRegistration } from './island-registry.ts'
 
 export function regox(config: RegoxConfig): Plugin {
   let islandMapCache: IslandMap = new Map()
+  let pendingManifest: { pages: ReturnType<typeof scanPages>; islandMaps: Map<string, IslandMap> } | null = null
 
   return {
     name: 'regox',
@@ -18,14 +19,13 @@ export function regox(config: RegoxConfig): Plugin {
     buildStart() {
       const pagesDir = path.resolve('frontend/pages')
       const templatesDir = path.resolve('backend/templates')
-      const distDir = path.resolve('frontend/dist')
 
       if (!fs.existsSync(pagesDir)) return
 
       const pages = scanPages(pagesDir, templatesDir)
       const ssrPages = pages.filter(p => p.mode !== 'csr')
 
-      const islandMaps = new Map<string, ReturnType<typeof detectIslands>>()
+      const islandMaps = new Map<string, IslandMap>()
 
       islandMapCache = new Map()
       for (const page of pages) {
@@ -56,8 +56,16 @@ export function regox(config: RegoxConfig): Plugin {
         }
       }
 
-      writeManifest(pages, islandMaps, distDir)
-      console.log(`[regox] manifest written: frontend/dist/manifest.json (${pages.length} pages)`)
+      // Defer manifest writing to closeBundle so Vite's emptyOutDir doesn't delete it
+      pendingManifest = { pages, islandMaps }
+    },
+
+    closeBundle() {
+      if (!pendingManifest) return
+      const distDir = path.resolve('frontend/dist')
+      writeManifest(pendingManifest.pages, pendingManifest.islandMaps, distDir)
+      console.log(`[regox] manifest written: frontend/dist/manifest.json (${pendingManifest.pages.length} pages)`)
+      pendingManifest = null
     },
 
     transform(code, id) {
