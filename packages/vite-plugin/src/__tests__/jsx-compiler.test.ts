@@ -294,6 +294,63 @@ describe('<Client> Form 1 — self-closing island mount', () => {
   })
 })
 
+// ── <Client> Form 2 — render prop inline island extraction ───────────────────
+
+describe('<Client> Form 2 — render prop inline extraction', () => {
+  it('emits data-island mount point for render prop form', () => {
+    const src = `
+      export default function ProductPage({ product }: ProductPageData) {
+        return (
+          <div>
+            <Client name="WishlistToggle" productId={product.id}>
+              {({ productId }) => {
+                const [saved, setSaved] = useState(false)
+                return <button onClick={() => setSaved(s => !s)}>Save</button>
+              }}
+            </Client>
+          </div>
+        )
+      }
+    `
+    const { templ } = compile(src)
+    expect(templ).toContain('data-island="WishlistToggle"')
+    expect(templ).toContain('"productId": data.Product.ID')
+  })
+
+  it('calls onScaffold with name and props list', () => {
+    const src = `
+      export default function ProductPage({ product }: ProductPageData) {
+        return (
+          <Client name="WishlistToggle" productId={product.id}>
+            {({ productId }) => {
+              const [saved, setSaved] = useState(false)
+              return <button>Save</button>
+            }}
+          </Client>
+        )
+      }
+    `
+    const scaffolds: any[] = []
+    compileJSXToTempl(src.trim(), new Map(), baseOpts, (spec) => scaffolds.push(spec))
+    expect(scaffolds).toHaveLength(1)
+    expect(scaffolds[0].name).toBe('WishlistToggle')
+    expect(scaffolds[0].props).toContainEqual({ name: 'productId' })
+  })
+
+  it('throws CompileError when children is not a render prop arrow function', () => {
+    const src = `
+      export default function ProductPage({ product }: ProductPageData) {
+        return (
+          <Client name="X">
+            <div>not a render prop</div>
+          </Client>
+        )
+      }
+    `
+    expect(() => compile(src)).toThrow(CompileError)
+  })
+})
+
 // ── Fast-fail cases ───────────────────────────────────────────────────────────
 
 describe('fast-fail on unsupported patterns', () => {

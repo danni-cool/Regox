@@ -10,17 +10,27 @@ export class CompileError extends Error {
   }
 }
 
+export interface ScaffoldSpec {
+  name: string
+  renderPropSrc: string
+  props: Array<{ name: string }>
+}
+
+export type OnScaffold = (spec: ScaffoldSpec) => void
+
 interface EmitCtx {
   islandMap: IslandMap
   paramNames: Set<string>
   loopVars: Set<string>
   filePath: string
+  onScaffold?: OnScaffold
 }
 
 export function compileJSXToTempl(
   source: string,
   islandMap: IslandMap,
   opts: CompileOptions,
+  onScaffold?: OnScaffold,
 ): { templ: string; propsStruct: string } {
   const ast = parse(source, { sourceType: 'module', plugins: ['typescript', 'jsx'] })
 
@@ -43,6 +53,7 @@ export function compileJSXToTempl(
     paramNames,
     loopVars: new Set(),
     filePath: opts.filePath ?? '',
+    onScaffold,
   }
 
   const body = emitNode(jsxRoot, '  ', ctx)
@@ -217,6 +228,46 @@ function emitClientElement(node: t.JSXElement, indent: string, ctx: EmitCtx): st
 
   const classLine = classValue ? `\n${indent}  class="${classValue}"` : ''
 
+  // Form 2 detection: check for render prop children
+  const nonEmptyChildren = node.children.filter(
+    c => !(t.isJSXText(c) && c.value.replace(/\n\s*/g, '').trim() === '')
+  )
+
+  if (nonEmptyChildren.length > 0) {
+    // Children present — must be exactly one JSXExpressionContainer wrapping an arrow function
+    if (
+      nonEmptyChildren.length !== 1 ||
+      !t.isJSXExpressionContainer(nonEmptyChildren[0]) ||
+      !t.isArrowFunctionExpression((nonEmptyChildren[0] as t.JSXExpressionContainer).expression)
+    ) {
+      throw new CompileError(
+        `<Client name="${islandName}"> children must be a single render prop arrow function:\n` +
+        `  {({ prop1, prop2 }) => { /* hooks and JSX */ }}`,
+        ctx.filePath,
+      )
+    }
+
+    // Extract prop names from the render prop's destructured parameter
+    const arrow = (nonEmptyChildren[0] as t.JSXExpressionContainer).expression as t.ArrowFunctionExpression
+    const renderProps: Array<{ name: string }> = []
+    const firstParam = arrow.params[0]
+    if (t.isObjectPattern(firstParam)) {
+      for (const p of firstParam.properties) {
+        if (t.isObjectProperty(p) && t.isIdentifier(p.key)) {
+          renderProps.push({ name: p.key.name })
+        }
+      }
+    }
+
+    // Notify caller (index.ts) to scaffold or validate the island file
+    ctx.onScaffold?.({
+      name: islandName,
+      renderPropSrc: '',
+      props: renderProps,
+    })
+  }
+
+  // Both Form 1 and Form 2 emit the same data-island mount point
   return [
     `${indent}<div`,
     `${indent}  data-island="${islandName}"`,
