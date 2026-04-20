@@ -1,5 +1,9 @@
 {
   "pages": {
+    "/_layout": {
+      "mode": "csr",
+      "islands": []
+    },
     "/": {
       "mode": "csr",
       "islands": []

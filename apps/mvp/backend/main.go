@@ -29,6 +29,9 @@ func main() {
 	}
 
 	r := server.NewRouter(manifest)
+	r.SetLayout(func(title string) templ.Component {
+		return templates.Layout(title)
+	})
 
 	r.SSR("/product/{id}", func(ctx context.Context, data any) (templ.Component, error) {
 		d := data.(generated.ProductPageData)
@@ -41,6 +44,22 @@ func main() {
 	}, resolvers.ShopPage)
 
 	r.CSR("/", string(shell))
+
+	r.NotFound(func(ctx context.Context, data any) (templ.Component, error) {
+		return templates.NotFound(), nil
+	}, func(ctx context.Context, req *http.Request) (any, error) {
+		return nil, nil
+	})
+
+	r.Error(func(ctx context.Context, data any) (templ.Component, error) {
+		msg, _ := data.(string)
+		if msg == "" {
+			msg = "Something went wrong."
+		}
+		return templates.ErrorPage(msg), nil
+	}, func(ctx context.Context, req *http.Request, err error) (any, error) {
+		return err.Error(), nil
+	})
 
 	log.Println("regox mvp listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))

@@ -1,14 +1,17 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { Connect, Plugin } from 'vite'
-import type { RegoxConfig } from './types.ts'
+import type { IslandMap, RegoxConfig } from './types.ts'
 import { scanPages } from './page-scanner.ts'
 import { detectIslands } from './island-detector.ts'
 import { compileJSXToTempl, CompileError } from './jsx-compiler.ts'
 import { writeTemplFiles } from './templ-writer.ts'
 import { writeManifest } from './manifest-writer.ts'
+import { generateIslandRegistration } from './island-registry.ts'
 
 export function regox(config: RegoxConfig): Plugin {
+  let islandMapCache: IslandMap = new Map()
+
   return {
     name: 'regox',
 
@@ -24,10 +27,14 @@ export function regox(config: RegoxConfig): Plugin {
 
       const islandMaps = new Map<string, ReturnType<typeof detectIslands>>()
 
+      islandMapCache = new Map()
       for (const page of pages) {
         const source = fs.readFileSync(page.filePath, 'utf-8')
         const islandMap = detectIslands(source, page.filePath, { config })
         islandMaps.set(page.route, islandMap)
+        for (const [name, meta] of islandMap) {
+          islandMapCache.set(name, meta)
+        }
       }
 
       for (const page of ssrPages) {
@@ -51,6 +58,13 @@ export function regox(config: RegoxConfig): Plugin {
 
       writeManifest(pages, islandMaps, distDir)
       console.log(`[regox] manifest written: frontend/dist/manifest.json (${pages.length} pages)`)
+    },
+
+    transform(code, id) {
+      const basename = path.basename(id, path.extname(id))
+      if (!islandMapCache.has(basename)) return null
+      const registration = generateIslandRegistration(basename)
+      return { code: code + '\n' + registration, map: null }
     },
 
     configureServer(server) {
