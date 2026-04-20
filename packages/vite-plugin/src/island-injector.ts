@@ -1,4 +1,5 @@
 import type { IslandMap } from './types'
+import { generateIslandOverlayScript } from './island-overlay'
 
 export function generateIslandInjectionScript(islandMap: IslandMap, bundleUrl: string): string {
   const _islandNames = Array.from(islandMap.keys())
@@ -38,7 +39,8 @@ export function generateIslandInjectionScript(islandMap: IslandMap, bundleUrl: s
 <script type="module" src="${bundleUrl}"></script>`
 }
 
-export function injectIslandScripts(html: string, islandMap: IslandMap, bundleUrl: string): string {
+export function injectIslandScripts(html: string, islandMap: IslandMap, bundleUrl: string, dev = false): string {
   const script = generateIslandInjectionScript(islandMap, bundleUrl)
-  return html.replace('</body>', `${script}\n</body>`)
+  const overlay = dev ? generateIslandOverlayScript() : ''
+  return html.replace('</body>', `${script}${overlay}\n</body>`)
 }
