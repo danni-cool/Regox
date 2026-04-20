@@ -38,8 +38,8 @@ describe('countIslandMounts', () => {
 
   it('counts elements with data-island attribute', () => {
     document.body.innerHTML = `
-      <div data-island="CartButton" data-props="{}"></div>
-      <div data-island="Header" data-props="{}"></div>
+      <div data-island="CartButton" data-island-props="{}"></div>
+      <div data-island="Header" data-island-props="{}"></div>
     `
     expect(countIslandMounts()).toBe(2)
   })
@@ -48,7 +48,7 @@ describe('countIslandMounts', () => {
 describe('mountIslands', () => {
   it('calls registry and mounts component on data-island element', () => {
     document.body.innerHTML = `
-      <div data-island="Counter" data-props='{"count":5}'></div>
+      <div data-island="Counter" data-island-props='{"count":5}'></div>
     `
     const mounted: Array<{ name: string; props: Record<string, unknown> }> = []
     const registry = {
@@ -64,7 +64,7 @@ describe('mountIslands', () => {
   })
 
   it('warns and skips unknown island names', () => {
-    document.body.innerHTML = `<div data-island="Unknown" data-props='{}'></div>`
+    document.body.innerHTML = `<div data-island="Unknown" data-island-props='{}'></div>`
     const warned: string[] = []
     vi.spyOn(console, 'warn').mockImplementation((msg: string) => warned.push(msg))
     mountIslands({})
