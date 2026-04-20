@@ -145,9 +145,9 @@ func ProductDetailPage(data generated.ProductDetailPageData) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf(`{"productId":"%s","productName":"%s","price":%f}`, data.Product.Id, data.Product.Name, float64(data.Product.Price)))
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf(`{"productId":"%s","productName":"%s","price":%.2f}`, data.Product.Id, data.Product.Name, float64(data.Product.Price)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/product_detail.templ`, Line: 25, Col: 181}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/product_detail.templ`, Line: 25, Col: 183}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {

@@ -22,7 +22,7 @@ templ ProductDetailPage(data generated.ProductDetailPageData) {
 				} else {
 					<p class="text-red-500 text-sm mt-2">Out of stock</p>
 				}
-				<div data-island="AddToCart" data-island-props={ fmt.Sprintf(`{"productId":"%s","productName":"%s","price":%f}`, data.Product.Id, data.Product.Name, float64(data.Product.Price)) } class="mt-6"></div>
+				<div data-island="AddToCart" data-island-props={ fmt.Sprintf(`{"productId":"%s","productName":"%s","price":%.2f}`, data.Product.Id, data.Product.Name, float64(data.Product.Price)) } class="mt-6"></div>
 			</div>
 		</div>
 		<section class="mt-12">
