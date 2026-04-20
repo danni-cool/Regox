@@ -23,6 +23,7 @@ export interface RegoxConfig {
   export?: {
     ssgDir?: string
   }
+  providers?: string  // path relative to app root, e.g. './frontend/src/RegoxProviders.tsx'
 }
 
 // --- Compiler types ---

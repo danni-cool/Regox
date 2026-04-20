@@ -22,4 +22,16 @@ describe('generateIslandRegistration', () => {
     expect(result).toContain("data-island=\"AddToCart\"")
     expect(result).toContain("dataset.islandProps")
   })
+
+  it('wraps island with RegoxProviders when providersPath given', () => {
+    const result = generateIslandRegistration('CartButton', './frontend/src/RegoxProviders.tsx')
+    expect(result).toContain(`import RegoxProviders from './frontend/src/RegoxProviders.tsx'`)
+    expect(result).toContain('createElement(RegoxProviders, null, createElement(CartButton, props))')
+  })
+
+  it('does not import RegoxProviders when providersPath is undefined', () => {
+    const result = generateIslandRegistration('CartButton', undefined)
+    expect(result).not.toContain('RegoxProviders')
+    expect(result).toContain('createElement(CartButton, props)')
+  })
 })

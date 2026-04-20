@@ -68,4 +68,8 @@ export default defineConfig({
     ssgDir: './dist/static',
   },
 
+  // ─── Providers ─────────────────────────────────────────────────────────────
+
+  providers: './frontend/src/RegoxProviders.tsx',
+
 })

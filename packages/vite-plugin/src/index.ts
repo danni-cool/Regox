@@ -16,6 +16,7 @@ export function regox(config: RegoxConfig): Plugin {
   let islandMapCache: IslandMap = new Map()
   let pendingManifest: { pages: ReturnType<typeof scanPages>; islandMaps: Map<string, IslandMap> } | null = null
   let eventMapCache: EventMapType = {}
+  let resolvedProvidersPath: string | undefined
 
   return {
     name: 'regox',
@@ -58,6 +59,7 @@ export function regox(config: RegoxConfig): Plugin {
     },
 
     buildStart() {
+      resolvedProvidersPath = config.providers ? path.resolve(config.providers) : undefined
       const pagesDir = path.resolve('frontend/pages')
       const templatesDir = path.resolve('backend/templates')
 
@@ -196,7 +198,7 @@ export function regox(config: RegoxConfig): Plugin {
     transform(code, id) {
       const basename = path.basename(id, path.extname(id))
       if (!islandMapCache.has(basename)) return null
-      const registration = generateIslandRegistration(basename)
+      const registration = generateIslandRegistration(basename, resolvedProvidersPath)
       return { code: code + '\n' + registration, map: null }
     },
 
