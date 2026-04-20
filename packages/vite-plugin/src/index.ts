@@ -159,12 +159,15 @@ export function regox(config: RegoxConfig): Plugin {
       if (!pendingManifest) return
       const distDir = path.resolve('frontend/dist')
 
-      // Extract the hashed main JS chunk URL from Vite's built index.html
+      // Extract the hashed main JS chunk URL and CSS URL from Vite's built index.html
       let mainScript: string | undefined
+      let styleSheet: string | undefined
       try {
         const indexHtml = fs.readFileSync(path.join(distDir, 'index.html'), 'utf-8')
-        const match = indexHtml.match(/src="(\/assets\/[^"]+\.js)"/)
-        if (match) mainScript = match[1]
+        const jsMatch = indexHtml.match(/src="(\/assets\/[^"]+\.js)"/)
+        if (jsMatch) mainScript = jsMatch[1]
+        const cssMatch = indexHtml.match(/href="(\/assets\/[^"]+\.css)"/)
+        if (cssMatch) styleSheet = cssMatch[1]
       } catch { /* dev mode or pre-build — skip */ }
 
       // Scan built islands/ chunk directory to populate islandChunks map.
@@ -185,7 +188,7 @@ export function regox(config: RegoxConfig): Plugin {
         }
       }
 
-      writeManifest(pendingManifest.pages, pendingManifest.islandMaps, distDir, mainScript, islandChunks)
+      writeManifest(pendingManifest.pages, pendingManifest.islandMaps, distDir, mainScript, islandChunks, styleSheet)
       console.log(`[regox] manifest written: frontend/dist/manifest.json (${pendingManifest.pages.length} pages, ${Object.keys(islandChunks).length} island chunks)`)
       pendingManifest = null
     },

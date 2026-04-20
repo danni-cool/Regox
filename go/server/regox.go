@@ -10,6 +10,7 @@ type Manifest struct {
 	Pages        map[string]PageEntry `json:"pages"`
 	IslandChunks map[string]string    `json:"islandChunks"`
 	MainScript   string               `json:"mainScript,omitempty"`
+	StyleSheet   string               `json:"styleSheet,omitempty"`
 }
 
 // PageEntry describes one page's rendering mode and its Island components.

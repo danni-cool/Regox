@@ -1,6 +1,6 @@
 package templates
 
-templ Layout(title string) {
+templ Layout(title string, stylesheet string) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -13,12 +13,9 @@ templ Layout(title string) {
 					Regox Shop
 				}
 			</title>
-			<script src="https://cdn.tailwindcss.com"></script>
-			<style type="text/tailwindcss">
-				@layer base {
-					body { @apply bg-gray-50 text-gray-900; }
-				}
-			</style>
+			if stylesheet != "" {
+				<link rel="stylesheet" href={ stylesheet }/>
+			}
 		</head>
 		<body class="min-h-screen flex flex-col">
 			<nav class="bg-white border-b border-gray-200 sticky top-0 z-50">

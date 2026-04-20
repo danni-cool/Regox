@@ -34,11 +34,12 @@
     }
   },
   "islandChunks": {
-    "AddToCart": "/assets/islands/AddToCart-DQi9u5Hd.js",
-    "CartBadge": "/assets/islands/CartBadge-BVfAxw5K.js",
-    "CartView-jBq": "/assets/islands/CartView-jBq-e897.js",
+    "AddToCart": "/assets/islands/AddToCart-DTyK5vBg.js",
+    "CartBadge": "/assets/islands/CartBadge-M-hDy7RM.js",
+    "CartView": "/assets/islands/CartView-4cKMknpl.js",
     "Reviews": "/assets/islands/Reviews-BErFJd3Q.js",
-    "Toast-C": "/assets/islands/Toast-C-3K54vn.js"
+    "Toast": "/assets/islands/Toast-C-3K54vn.js"
   },
-  "mainScript": "/assets/index-Ca4Zr9en.js"
+  "mainScript": "/assets/index-e4AqqNUC.js",
+  "styleSheet": "/assets/index-B23bFJkh.css"
 }

@@ -29,7 +29,7 @@ func main() {
 
 	r := server.NewRouter(manifest)
 	r.SetLayout(func(title string) templ.Component {
-		return templates.Layout(title)
+		return templates.Layout(title, manifest.StyleSheet)
 	})
 
 	assetsFS := http.FileServer(http.Dir("../frontend/dist/assets"))

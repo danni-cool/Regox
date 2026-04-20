@@ -12,6 +12,7 @@ interface Manifest {
   pages: Record<string, ManifestPage>
   islandChunks: Record<string, string>
   mainScript?: string
+  styleSheet?: string
 }
 
 export function writeManifest(
@@ -20,11 +21,13 @@ export function writeManifest(
   outDir: string,
   mainScript?: string,
   islandChunks?: Record<string, string>,
+  styleSheet?: string,
 ): void {
   const manifest: Manifest = {
     pages: {},
     islandChunks: islandChunks ?? {},
     ...(mainScript ? { mainScript } : {}),
+    ...(styleSheet ? { styleSheet } : {}),
   }
 
   for (const page of pages) {
