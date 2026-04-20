@@ -1,6 +1,9 @@
 import type { RegoxPageConfig } from '../regox.d'
 import type { components } from '../generated/types'
 import { useResolverData } from '@regox/client'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
 
 export const regox: RegoxPageConfig = { mode: 'isr', revalidate: 60 }
 
@@ -16,15 +19,24 @@ export default function ProductsPage() {
       <h1 className="text-3xl font-bold mb-8">All Products</h1>
       <div className="grid grid-cols-3 gap-6">
         {data.products.map(p => (
-          <a key={p.id} href={`/products/${p.id}`} className="block border rounded-lg overflow-hidden hover:shadow-md transition">
+          <Card key={p.id} className="flex flex-col overflow-hidden">
             <img src={p.imageURL} alt={p.name} className="w-full h-48 object-cover" />
-            <div className="p-4">
-              <span className="text-xs text-blue-600 font-medium">{p.category}</span>
-              <h3 className="font-medium mt-1">{p.name}</h3>
-              <p className="text-gray-800 font-bold mt-1">${p.price.toFixed(2)}</p>
-              {p.stock === 0 && <span className="text-red-500 text-sm">Out of stock</span>}
-            </div>
-          </a>
+            <CardHeader>
+              <Badge variant="secondary" className="w-fit">{p.category}</Badge>
+              <CardTitle className="text-base mt-1">{p.name}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <span className="font-bold text-gray-800">${p.price.toFixed(2)}</span>
+              {p.stock === 0 && (
+                <Badge variant="destructive" className="ml-2">Out of stock</Badge>
+              )}
+            </CardContent>
+            <CardFooter>
+              <Button size="sm" asChild className="w-full">
+                <a href={`/products/${p.id}`}>View</a>
+              </Button>
+            </CardFooter>
+          </Card>
         ))}
       </div>
     </main>

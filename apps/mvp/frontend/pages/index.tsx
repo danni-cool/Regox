@@ -1,6 +1,9 @@
 import type { RegoxPageConfig } from '../regox.d'
 import type { components } from '../generated/types'
 import { useResolverData } from '@regox/client'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
 
 export const regox: RegoxPageConfig = { mode: 'ssr' }
 
@@ -21,11 +24,20 @@ export default function HomePage() {
         <h2 className="text-2xl font-semibold mb-4">Featured Products</h2>
         <div className="grid grid-cols-3 gap-4">
           {data.featuredProducts.map(p => (
-            <a key={p.id} href={`/products/${p.id}`} className="block border rounded-lg p-4 hover:shadow-md transition">
-              <img src={p.imageURL} alt={p.name} className="w-full h-40 object-cover rounded mb-2" />
-              <h3 className="font-medium">{p.name}</h3>
-              <p className="text-gray-600">${p.price.toFixed(2)}</p>
-            </a>
+            <Card key={p.id} className="flex flex-col">
+              <img src={p.imageURL} alt={p.name} className="w-full h-40 object-cover rounded-t-lg" />
+              <CardHeader>
+                <CardTitle className="text-base">{p.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <span className="font-bold">${p.price.toFixed(2)}</span>
+              </CardContent>
+              <CardFooter>
+                <Button size="sm" asChild className="w-full">
+                  <a href={`/products/${p.id}`}>View</a>
+                </Button>
+              </CardFooter>
+            </Card>
           ))}
         </div>
       </section>
@@ -34,10 +46,19 @@ export default function HomePage() {
         <h2 className="text-2xl font-semibold mb-4">Latest News</h2>
         <div className="space-y-4">
           {data.latestNews.map(n => (
-            <a key={n.id} href={`/news/${n.id}`} className="block border rounded-lg p-4 hover:shadow-md transition">
-              <h3 className="font-medium">{n.title}</h3>
-              <p className="text-gray-600 text-sm mt-1">{n.summary}</p>
-            </a>
+            <Card key={n.id} className="hover:shadow-md transition">
+              <CardHeader>
+                <CardTitle className="text-base">{n.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm">{n.summary}</p>
+              </CardContent>
+              <CardFooter>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`/news/${n.id}`}>Read more</a>
+                </Button>
+              </CardFooter>
+            </Card>
           ))}
         </div>
       </section>

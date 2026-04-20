@@ -1,6 +1,8 @@
 import { useResolverData } from '@regox/client'
 import type { components } from '../../generated/types'
 import type { RegoxPageConfig } from '../../regox.d'
+import { Badge } from '../../components/ui/badge'
+import { Separator } from '../../components/ui/separator'
 
 export const regox: RegoxPageConfig = { mode: 'ssr' }
 
@@ -21,13 +23,13 @@ export default function ProductDetailPage() {
           <img src={product.imageURL} alt={product.name} className="w-full rounded-lg shadow" />
         </div>
         <div>
-          <span className="text-sm text-blue-600 font-medium">{product.category}</span>
+          <Badge variant="secondary">{product.category}</Badge>
           <h1 className="text-2xl font-bold mt-2">{product.name}</h1>
           <p className="text-3xl font-bold text-gray-900 mt-3">${product.price.toFixed(2)}</p>
           <p className="text-gray-600 mt-4">{product.description}</p>
           {product.stock > 0
-            ? <p className="text-green-600 text-sm mt-2">{product.stock} in stock</p>
-            : <p className="text-red-500 text-sm mt-2">Out of stock</p>
+            ? <Badge variant="secondary" className="mt-2 text-green-700 bg-green-100">{product.stock} in stock</Badge>
+            : <Badge variant="destructive" className="mt-2">Out of stock</Badge>
           }
           <div
             data-island="AddToCart"
@@ -36,7 +38,8 @@ export default function ProductDetailPage() {
           />
         </div>
       </div>
-      <section className="mt-12">
+      <Separator className="mt-12 mb-6" />
+      <section>
         <h2 className="text-xl font-semibold mb-4">Customer Reviews</h2>
         <div data-island="Reviews" data-island-props={JSON.stringify({ productId: product.id })} />
       </section>
