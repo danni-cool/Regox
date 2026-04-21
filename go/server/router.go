@@ -35,6 +35,7 @@ type Router struct {
 	mux          *http.ServeMux
 	manifest     *Manifest
 	isr          *ISRCache
+	middlewares  []MiddlewareFunc
 	layout       func(title string) templ.Component
 	notFoundPage PageFunc
 	notFoundRes  ResolverFunc
@@ -233,7 +234,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		r.serveNotFound(w, req)
 		return
 	}
-	r.mux.ServeHTTP(w, req)
+	r.applyMiddleware(r.mux).ServeHTTP(w, req)
 }
 
 func (r *Router) serveNotFound(w http.ResponseWriter, req *http.Request) {
