@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/a-h/templ"
 )
@@ -36,6 +37,7 @@ type Router struct {
 	manifest     *Manifest
 	isr          *ISRCache
 	middlewares  []MiddlewareFunc
+	mu           sync.RWMutex
 	layout       func(title string) templ.Component
 	notFoundPage PageFunc
 	notFoundRes  ResolverFunc
