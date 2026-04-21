@@ -43,7 +43,6 @@ function generateImports(goModule: string): string {
   return [
     'import (',
     '\t"context"',
-    '\t"net/http"',
     '',
     '\t"github.com/a-h/templ"',
     `\tserver "regox.dev/server"`,
@@ -58,7 +57,7 @@ function generatePageResolvers(pages: PageMeta[]): string {
   if (serverPages.length === 0) return ''
   const lines = ['// PageResolvers provides data for all SSR and ISR pages.', '// Implement this interface and pass it to RegisterRoutes.', 'type PageResolvers interface {']
   for (const page of serverPages) {
-    lines.push(`\t${page.pageName}(ctx context.Context, req *http.Request) (any, error)`)
+    lines.push(`\t${page.pageName}(ctx *server.RequestCtx) (any, error)`)
   }
   lines.push('}')
   return lines.join('\n')
@@ -84,8 +83,8 @@ function generateRegisterRoutes(pages: PageMeta[]): string {
     lines.push(
       `\tr.SSR(${constName}, func(ctx context.Context, data any) (templ.Component, error) {`,
       `\t\treturn templates.${page.pageName}(data.(generated.${dt})), nil`,
-      `\t}, func(ctx context.Context, req *http.Request) (any, error) {`,
-      `\t\treturn resolvers.${page.pageName}(ctx, req)`,
+      `\t}, func(ctx *server.RequestCtx) (any, error) {`,
+      `\t\treturn resolvers.${page.pageName}(ctx)`,
       `\t})`,
     )
   }
@@ -95,8 +94,8 @@ function generateRegisterRoutes(pages: PageMeta[]): string {
     lines.push(
       `\tr.ISR(${constName}, func(ctx context.Context, data any) (templ.Component, error) {`,
       `\t\treturn templates.${page.pageName}(data.(generated.${dt})), nil`,
-      `\t}, func(ctx context.Context, req *http.Request) (any, error) {`,
-      `\t\treturn resolvers.${page.pageName}(ctx, req)`,
+      `\t}, func(ctx *server.RequestCtx) (any, error) {`,
+      `\t\treturn resolvers.${page.pageName}(ctx)`,
       `\t})`,
     )
   }

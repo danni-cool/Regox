@@ -83,7 +83,7 @@ describe('generateGoRoutes with goModule (full wiring)', () => {
     const pages = [{ ...fakePage('/', 'ssr'), pageName: 'HomePage' }]
     const out = generateGoRoutes(pages, 'regoxroutes', opts)
     expect(out).toContain('PageResolvers')
-    expect(out).toContain('HomePage(ctx context.Context, req *http.Request) (any, error)')
+    expect(out).toContain('HomePage(ctx *server.RequestCtx) (any, error)')
   })
 
   it('omits CSR pages from PageResolvers', () => {
@@ -107,10 +107,10 @@ describe('generateGoRoutes with goModule (full wiring)', () => {
     expect(out).toContain('r.ISR(')
   })
 
-  it('calls AutoRegisterCSR at the end of RegisterRoutes', () => {
+  it('registers CSR pages with r.CSRPage in RegisterRoutes', () => {
     const pages = [{ ...fakePage('/cart', 'csr'), pageName: 'CartPage' }]
     const out = generateGoRoutes(pages, 'regoxroutes', opts)
-    expect(out).toContain('AutoRegisterCSR()')
+    expect(out).toContain('r.CSRPage(RouteCart, templates.CartPage())')
   })
 
   it('uses explicit dataType when provided', () => {
