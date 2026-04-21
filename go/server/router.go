@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -259,6 +260,20 @@ func (r *Router) serveNotFound(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) serveError(w http.ResponseWriter, req *http.Request, origErr error) {
+	var re *redirectErr
+	if errors.As(origErr, &re) {
+		http.Redirect(w, req, re.url, re.code)
+		return
+	}
+	var se *statusErr
+	if errors.As(origErr, &se) {
+		if se.code == http.StatusNotFound {
+			r.serveNotFound(w, req)
+		} else {
+			w.WriteHeader(se.code)
+		}
+		return
+	}
 	log.Printf("[regox] error serving %s: %v", req.URL.Path, origErr)
 	w.WriteHeader(http.StatusInternalServerError)
 	if r.errorPage == nil {

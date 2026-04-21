@@ -66,6 +66,57 @@ func TestStatus_IsError(t *testing.T) {
 	}
 }
 
+func TestRouter_Resolver_Redirect(t *testing.T) {
+	m := makeManifest(map[string]server.PageEntry{"/login-required": {Mode: "ssr"}})
+	r := server.NewRouter(m)
+	r.SSR("/login-required", echoPage("secret"), func(ctx *server.RequestCtx) (any, error) {
+		return nil, server.Redirect("/login", http.StatusFound)
+	})
+
+	req := httptest.NewRequest("GET", "/login-required", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusFound {
+		t.Errorf("expected 302, got %d", w.Code)
+	}
+	if loc := w.Header().Get("Location"); loc != "/login" {
+		t.Errorf("expected Location: /login, got %q", loc)
+	}
+}
+
+func TestRouter_Resolver_NotFound(t *testing.T) {
+	m := makeManifest(map[string]server.PageEntry{"/item": {Mode: "ssr"}})
+	r := server.NewRouter(m)
+	r.SSR("/item", echoPage("item"), func(ctx *server.RequestCtx) (any, error) {
+		return nil, server.NotFound()
+	})
+
+	req := httptest.NewRequest("GET", "/item", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected 404, got %d", w.Code)
+	}
+}
+
+func TestRouter_Resolver_CustomStatus(t *testing.T) {
+	m := makeManifest(map[string]server.PageEntry{"/private": {Mode: "ssr"}})
+	r := server.NewRouter(m)
+	r.SSR("/private", echoPage("private"), func(ctx *server.RequestCtx) (any, error) {
+		return nil, server.Status(http.StatusForbidden)
+	})
+
+	req := httptest.NewRequest("GET", "/private", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403, got %d", w.Code)
+	}
+}
+
 func TestRequestCtx_Tag_Accumulates(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := server.NewRequestCtx(req)
