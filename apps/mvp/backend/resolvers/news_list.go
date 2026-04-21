@@ -1,16 +1,15 @@
 package resolvers
 
 import (
-	"context"
-	"net/http"
 	"sort"
 
 	"regox.dev/mvp/generated"
 	"regox.dev/mvp/store"
+	server "regox.dev/server"
 )
 
-func NewNewsList(s *store.Store) func(context.Context, *http.Request) (any, error) {
-	return func(ctx context.Context, r *http.Request) (any, error) {
+func NewNewsList(s *store.Store) func(*server.RequestCtx) (any, error) {
+	return func(ctx *server.RequestCtx) (any, error) {
 		allNews := s.ListNews()
 		sort.Slice(allNews, func(i, j int) bool {
 			return allNews[i].PublishedAt.After(allNews[j].PublishedAt)
@@ -21,9 +20,9 @@ func NewNewsList(s *store.Store) func(context.Context, *http.Request) (any, erro
 	}
 }
 
-func NewNewsDetail(s *store.Store) func(context.Context, *http.Request) (any, error) {
-	return func(ctx context.Context, r *http.Request) (any, error) {
-		id := r.PathValue("id")
+func NewNewsDetail(s *store.Store) func(*server.RequestCtx) (any, error) {
+	return func(ctx *server.RequestCtx) (any, error) {
+		id := ctx.PathValue("id")
 		n, ok := s.GetNews(id)
 		if !ok {
 			return nil, nil

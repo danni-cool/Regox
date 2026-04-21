@@ -3,7 +3,6 @@ package regoxroutes
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/a-h/templ"
 	server "regox.dev/server"
@@ -32,9 +31,9 @@ var PageModes = map[string]string{
 // PageResolvers provides data for all SSR and ISR pages.
 // Implement this interface and pass it to RegisterRoutes.
 type PageResolvers interface {
-	HomePage(ctx context.Context, req *http.Request) (any, error)
-	ProductDetailPage(ctx context.Context, req *http.Request) (any, error)
-	ProductsPage(ctx context.Context, req *http.Request) (any, error)
+	HomePage(ctx *server.RequestCtx) (any, error)
+	ProductDetailPage(ctx *server.RequestCtx) (any, error)
+	ProductsPage(ctx *server.RequestCtx) (any, error)
 }
 
 // RegisterRoutes wires all pages from the manifest.
@@ -43,18 +42,18 @@ type PageResolvers interface {
 func RegisterRoutes(r *server.Router, resolvers PageResolvers) error {
 	r.SSR(RouteHome, func(ctx context.Context, data any) (templ.Component, error) {
 		return templates.HomePage(data.(generated.HomePageData)), nil
-	}, func(ctx context.Context, req *http.Request) (any, error) {
-		return resolvers.HomePage(ctx, req)
+	}, func(ctx *server.RequestCtx) (any, error) {
+		return resolvers.HomePage(ctx)
 	})
 	r.SSR(RouteProductsId, func(ctx context.Context, data any) (templ.Component, error) {
 		return templates.ProductDetailPage(data.(generated.ProductDetailPageData)), nil
-	}, func(ctx context.Context, req *http.Request) (any, error) {
-		return resolvers.ProductDetailPage(ctx, req)
+	}, func(ctx *server.RequestCtx) (any, error) {
+		return resolvers.ProductDetailPage(ctx)
 	})
 	r.ISR(RouteProducts, func(ctx context.Context, data any) (templ.Component, error) {
 		return templates.ProductsPage(data.(generated.ProductsPageData)), nil
-	}, func(ctx context.Context, req *http.Request) (any, error) {
-		return resolvers.ProductsPage(ctx, req)
+	}, func(ctx *server.RequestCtx) (any, error) {
+		return resolvers.ProductsPage(ctx)
 	})
 	if err := r.CSRPage(RouteCart, templates.CartPage()); err != nil {
 		return err

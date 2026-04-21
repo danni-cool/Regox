@@ -1,17 +1,16 @@
 package resolvers
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 
 	"regox.dev/mvp/generated"
 	"regox.dev/mvp/store"
+	server "regox.dev/server"
 )
 
-func NewProductDetail(s *store.Store) func(context.Context, *http.Request) (any, error) {
-	return func(ctx context.Context, r *http.Request) (any, error) {
-		id := r.PathValue("id")
+func NewProductDetail(s *store.Store) func(*server.RequestCtx) (any, error) {
+	return func(ctx *server.RequestCtx) (any, error) {
+		id := ctx.PathValue("id")
 		if id == "" {
 			return nil, fmt.Errorf("missing product id")
 		}

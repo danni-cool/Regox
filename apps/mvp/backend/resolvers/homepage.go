@@ -1,16 +1,15 @@
 package resolvers
 
 import (
-	"context"
-	"net/http"
 	"sort"
 
 	"regox.dev/mvp/generated"
 	"regox.dev/mvp/store"
+	server "regox.dev/server"
 )
 
-func NewHomePage(s *store.Store) func(context.Context, *http.Request) (any, error) {
-	return func(ctx context.Context, r *http.Request) (any, error) {
+func NewHomePage(s *store.Store) func(*server.RequestCtx) (any, error) {
+	return func(ctx *server.RequestCtx) (any, error) {
 		allProducts := s.ListProducts()
 		sort.Slice(allProducts, func(i, j int) bool {
 			return allProducts[i].ID < allProducts[j].ID

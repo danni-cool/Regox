@@ -1,13 +1,13 @@
 package resolvers_test
 
 import (
-	"context"
 	"net/http/httptest"
 	"testing"
 
 	"regox.dev/mvp/generated"
 	"regox.dev/mvp/resolvers"
 	"regox.dev/mvp/store"
+	server "regox.dev/server"
 )
 
 func setupStore() *store.Store {
@@ -20,7 +20,7 @@ func TestHomePage(t *testing.T) {
 	s := setupStore()
 	resolver := resolvers.NewHomePage(s)
 	req := httptest.NewRequest("GET", "/", nil)
-	data, err := resolver(context.Background(), req)
+	data, err := resolver(server.NewRequestCtx(req))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func TestProductsPage(t *testing.T) {
 	s := setupStore()
 	resolver := resolvers.NewProductList(s)
 	req := httptest.NewRequest("GET", "/products", nil)
-	data, err := resolver(context.Background(), req)
+	data, err := resolver(server.NewRequestCtx(req))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestProductDetail(t *testing.T) {
 	resolver := resolvers.NewProductDetail(s)
 	req := httptest.NewRequest("GET", "/products/prod-01", nil)
 	req.SetPathValue("id", "prod-01")
-	data, err := resolver(context.Background(), req)
+	data, err := resolver(server.NewRequestCtx(req))
 	if err != nil {
 		t.Fatal(err)
 	}

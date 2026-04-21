@@ -17,17 +17,18 @@ import (
 	server "regox.dev/server"
 )
 
+
 // appResolvers implements regoxroutes.PageResolvers.
 type appResolvers struct{ store *store.Store }
 
-func (a *appResolvers) HomePage(ctx context.Context, req *http.Request) (any, error) {
-	return resolvers.NewHomePage(a.store)(ctx, req)
+func (a *appResolvers) HomePage(ctx *server.RequestCtx) (any, error) {
+	return resolvers.NewHomePage(a.store)(ctx)
 }
-func (a *appResolvers) ProductsPage(ctx context.Context, req *http.Request) (any, error) {
-	return resolvers.NewProductList(a.store)(ctx, req)
+func (a *appResolvers) ProductsPage(ctx *server.RequestCtx) (any, error) {
+	return resolvers.NewProductList(a.store)(ctx)
 }
-func (a *appResolvers) ProductDetailPage(ctx context.Context, req *http.Request) (any, error) {
-	return resolvers.NewProductDetail(a.store)(ctx, req)
+func (a *appResolvers) ProductDetailPage(ctx *server.RequestCtx) (any, error) {
+	return resolvers.NewProductDetail(a.store)(ctx)
 }
 
 func main() {
@@ -77,7 +78,7 @@ func main() {
 
 	r.NotFound(func(ctx context.Context, data any) (templ.Component, error) {
 		return templates.NotFound(), nil
-	}, func(ctx context.Context, req *http.Request) (any, error) {
+	}, func(ctx *server.RequestCtx) (any, error) {
 		return nil, nil
 	})
 
@@ -87,7 +88,7 @@ func main() {
 			msg = "Something went wrong."
 		}
 		return templates.ErrorPage(msg), nil
-	}, func(ctx context.Context, req *http.Request, err error) (any, error) {
+	}, func(ctx *server.RequestCtx, err error) (any, error) {
 		return err.Error(), nil
 	})
 
