@@ -287,3 +287,36 @@ func TestRouter_ISR_CacheMiss(t *testing.T) {
 		t.Error("expected page content in ISR response")
 	}
 }
+
+func TestRouter_ISR_TagsStoredOnCacheMiss(t *testing.T) {
+	m := makeManifest(map[string]server.PageEntry{
+		"/shop": {Mode: "isr", Revalidate: 60},
+	})
+	router := server.NewRouter(m)
+	router.ISR("/shop", echoPage("shop"), func(ctx *server.RequestCtx) (any, error) {
+		ctx.Tag("shop", "shop:featured")
+		return map[string]any{"ok": true}, nil
+	})
+
+	// First request: cache miss, page renders and tags are stored
+	req := httptest.NewRequest("GET", "/shop", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 on first request, got %d", w.Code)
+	}
+
+	// Invalidate by tag
+	router.Revalidate(server.ByTag("shop"))
+
+	// Second request: cache miss again (entry was evicted), page re-renders
+	req2 := httptest.NewRequest("GET", "/shop", nil)
+	w2 := httptest.NewRecorder()
+	router.ServeHTTP(w2, req2)
+	if w2.Code != http.StatusOK {
+		t.Errorf("expected 200 after revalidation, got %d", w2.Code)
+	}
+	if !strings.Contains(w2.Body.String(), "shop") {
+		t.Error("expected page content after cache eviction")
+	}
+}

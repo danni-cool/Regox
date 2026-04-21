@@ -112,18 +112,18 @@ func (r *Router) ISR(pattern string, page PageFunc, resolver ResolverFunc) {
 		if hit && r.isr.IsStale(key) {
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.Write(html) //nolint:errcheck
-			r.isr.Revalidate(key, ttl, func() ([]byte, error) {
+			r.isr.RevalidateWithTags(key, ttl, func() ([]byte, []string, error) {
 				return r.renderToBytes(req.Context(), page, resolver, req)
 			})
 			return
 		}
 		// Cache miss: render synchronously
-		html, err := r.renderToBytes(req.Context(), page, resolver, req)
+		html, tags, err := r.renderToBytes(req.Context(), page, resolver, req)
 		if err != nil {
 			r.serveError(w, req, err)
 			return
 		}
-		r.isr.Set(key, html, ttl)
+		r.isr.SetWithTags(key, html, ttl, tags)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Write(html) //nolint:errcheck
 	})
@@ -293,35 +293,54 @@ func (r *Router) serveError(w http.ResponseWriter, req *http.Request, origErr er
 	RenderPage(w, comp, data) //nolint:errcheck
 }
 
-func (r *Router) renderToBytes(ctx context.Context, page PageFunc, resolver ResolverFunc, req *http.Request) ([]byte, error) {
+func (r *Router) renderToBytes(ctx context.Context, page PageFunc, resolver ResolverFunc, req *http.Request) ([]byte, []string, error) {
 	rctx := NewRequestCtx(req)
 	data, err := resolver(rctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	comp, err := page(ctx, data)
 	if err != nil {
-		return nil, fmt.Errorf("render: %w", err)
+		return nil, nil, fmt.Errorf("render: %w", err)
 	}
 	if r.layout != nil {
 		comp = r.wrapLayout(extractTitle(data), comp)
 	}
 	var buf bytes.Buffer
 	if err := comp.Render(ctx, &buf); err != nil {
-		return nil, fmt.Errorf("render: %w", err)
+		return nil, nil, fmt.Errorf("render: %w", err)
 	}
 	html := buf.String()
-
 	stateJSON, err := json.Marshal(data)
 	if err != nil {
-		return nil, fmt.Errorf("marshal state: %w", err)
+		return nil, nil, fmt.Errorf("marshal state: %w", err)
 	}
 	stateScript := fmt.Sprintf(`<script id="__REGOX_STATE__" type="application/json">%s</script>`, stateJSON)
 	inject := stateScript + r.islandScripts()
 	if strings.Contains(html, "</body>") {
 		html = strings.Replace(html, "</body>", inject+"</body>", 1)
 	}
-	return []byte(html), nil
+	return []byte(html), rctx.Tags(), nil
+}
+
+// InvalidateOption configures an ISR cache invalidation operation.
+type InvalidateOption func(*ISRCache)
+
+// ByPath returns an option that invalidates specific URL paths.
+func ByPath(paths ...string) InvalidateOption {
+	return func(c *ISRCache) { c.InvalidateByPath(paths...) }
+}
+
+// ByTag returns an option that invalidates all pages tagged with any of the given tags.
+func ByTag(tags ...string) InvalidateOption {
+	return func(c *ISRCache) { c.InvalidateByTag(tags...) }
+}
+
+// Revalidate immediately evicts ISR cache entries matching the given options.
+func (r *Router) Revalidate(opts ...InvalidateOption) {
+	for _, opt := range opts {
+		opt(r.isr)
+	}
 }
 
 func (r *Router) wrapLayout(title string, inner templ.Component) templ.Component {
