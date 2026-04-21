@@ -1,6 +1,7 @@
 package resolvers
 
 import (
+	"fmt"
 	"sort"
 
 	"regox.dev/mvp/generated"
@@ -23,9 +24,12 @@ func NewNewsList(s *store.Store) func(*server.RequestCtx) (any, error) {
 func NewNewsDetail(s *store.Store) func(*server.RequestCtx) (any, error) {
 	return func(ctx *server.RequestCtx) (any, error) {
 		id := ctx.PathValue("id")
+		if id == "" {
+			return nil, fmt.Errorf("missing news id")
+		}
 		n, ok := s.GetNews(id)
 		if !ok {
-			return nil, nil
+			return nil, fmt.Errorf("news item not found: %s", id)
 		}
 		return generated.NewsDetailPageData{
 			NewsItem: generated.NewsItem{

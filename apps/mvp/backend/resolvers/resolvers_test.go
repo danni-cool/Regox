@@ -67,3 +67,50 @@ func TestProductDetail(t *testing.T) {
 		t.Fatal("review author should not be empty")
 	}
 }
+
+func TestNewsList(t *testing.T) {
+	s := setupStore()
+	resolver := resolvers.NewNewsList(s)
+	req := httptest.NewRequest("GET", "/news", nil)
+	data, err := resolver(server.NewRequestCtx(req))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pageData := data.(generated.NewsPageData)
+	if len(pageData.News) == 0 {
+		t.Fatal("expected at least one news item")
+	}
+}
+
+func TestNewsDetail(t *testing.T) {
+	s := setupStore()
+	// Get first news ID from the store
+	allNews := s.ListNews()
+	if len(allNews) == 0 {
+		t.Skip("no news items seeded")
+	}
+	firstID := allNews[0].ID
+
+	resolver := resolvers.NewNewsDetail(s)
+	req := httptest.NewRequest("GET", "/news/"+firstID, nil)
+	req.SetPathValue("id", firstID)
+	data, err := resolver(server.NewRequestCtx(req))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pageData := data.(generated.NewsDetailPageData)
+	if pageData.NewsItem.Id == "" {
+		t.Fatal("news item ID should not be empty")
+	}
+}
+
+func TestNewsDetail_MissingID(t *testing.T) {
+	s := setupStore()
+	resolver := resolvers.NewNewsDetail(s)
+	req := httptest.NewRequest("GET", "/news/", nil)
+	// PathValue("id") returns "" — no SetPathValue call
+	_, err := resolver(server.NewRequestCtx(req))
+	if err == nil {
+		t.Fatal("expected error for missing news id")
+	}
+}
