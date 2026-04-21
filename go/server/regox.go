@@ -64,6 +64,9 @@ func (c *RequestCtx) Request() *http.Request                   { return c.r }
 // Ignored for non-ISR pages.
 func (c *RequestCtx) Tag(tags ...string) { c.tags = append(c.tags, tags...) }
 
+// Tags returns the cache invalidation tags accumulated by Tag calls.
+func (c *RequestCtx) Tags() []string { return c.tags }
+
 // --- Sentinel errors returned by resolvers ---
 
 type redirectErr struct {
@@ -71,7 +74,7 @@ type redirectErr struct {
 	code int
 }
 
-func (e *redirectErr) Error() string { return fmt.Sprintf("redirect %d → %s", e.code, e.url) }
+func (e *redirectErr) Error() string { return fmt.Sprintf("redirect %d -> %s", e.code, e.url) }
 
 type statusErr struct{ code int }
 

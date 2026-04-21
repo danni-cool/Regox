@@ -65,3 +65,16 @@ func TestStatus_IsError(t *testing.T) {
 		t.Fatal("Status() should return non-nil error")
 	}
 }
+
+func TestRequestCtx_Tag_Accumulates(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	ctx := server.NewRequestCtx(req)
+	ctx.Tag("product", "product:123")
+	tags := ctx.Tags()
+	if len(tags) != 2 {
+		t.Fatalf("Tags: got %d tags, want 2", len(tags))
+	}
+	if tags[0] != "product" || tags[1] != "product:123" {
+		t.Errorf("Tags: got %v, want [product product:123]", tags)
+	}
+}
