@@ -15,8 +15,8 @@ import (
 )
 
 type PageFunc func(context.Context, any) (templ.Component, error)
-type ResolverFunc func(context.Context, *http.Request) (any, error)
-type ErrorResolverFunc func(context.Context, *http.Request, error) (any, error)
+type ResolverFunc func(*RequestCtx) (any, error)
+type ErrorResolverFunc func(*RequestCtx, error) (any, error)
 
 // Titler is an optional interface page data structs can implement to supply a
 // dynamic <title> to the layout. If data does not implement Titler, the layout
@@ -75,13 +75,13 @@ func (r *Router) SetLayout(fn func(title string) templ.Component) {
 
 func (r *Router) SSR(pattern string, page PageFunc, resolver ResolverFunc) {
 	r.mux.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
-		ctx := req.Context()
-		data, err := resolver(ctx, req)
+		rctx := NewRequestCtx(req)
+		data, err := resolver(rctx)
 		if err != nil {
 			r.serveError(w, req, err)
 			return
 		}
-		comp, err := page(ctx, data)
+		comp, err := page(rctx.Context(), data)
 		if err != nil {
 			r.serveError(w, req, err)
 			return
@@ -245,7 +245,8 @@ func (r *Router) serveNotFound(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprint(w, "404 not found")
 		return
 	}
-	data, err := r.notFoundRes(req.Context(), req)
+	rctx := NewRequestCtx(req)
+	data, err := r.notFoundRes(rctx)
 	if err != nil {
 		data = nil
 	}
@@ -266,7 +267,8 @@ func (r *Router) serveError(w http.ResponseWriter, req *http.Request, origErr er
 	}
 	var data any
 	if r.errorRes != nil {
-		data, _ = r.errorRes(req.Context(), req, origErr)
+		rctx := NewRequestCtx(req)
+		data, _ = r.errorRes(rctx, origErr)
 	}
 	comp, err := r.errorPage(req.Context(), data)
 	if err != nil {
@@ -277,13 +279,14 @@ func (r *Router) serveError(w http.ResponseWriter, req *http.Request, origErr er
 }
 
 func (r *Router) renderToBytes(ctx context.Context, page PageFunc, resolver ResolverFunc, req *http.Request) ([]byte, error) {
-	data, err := resolver(ctx, req)
+	rctx := NewRequestCtx(req)
+	data, err := resolver(rctx)
 	if err != nil {
 		return nil, err
 	}
 	comp, err := page(ctx, data)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("render: %w", err)
 	}
 	if r.layout != nil {
 		comp = r.wrapLayout(extractTitle(data), comp)

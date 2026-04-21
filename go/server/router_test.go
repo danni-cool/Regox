@@ -26,11 +26,11 @@ func echoPage(text string) func(context.Context, any) (templ.Component, error) {
 	}
 }
 
-func okResolver(ctx context.Context, r *http.Request) (any, error) {
+func okResolver(ctx *server.RequestCtx) (any, error) {
 	return map[string]any{"ok": true}, nil
 }
 
-func errorResolver(ctx context.Context, r *http.Request) (any, error) {
+func errorResolver(ctx *server.RequestCtx) (any, error) {
 	return nil, fmt.Errorf("upstream error")
 }
 
@@ -107,7 +107,7 @@ func TestRouter_SSR_ResolverError_Returns500(t *testing.T) {
 func TestRouter_NotFound_Custom(t *testing.T) {
 	m := makeManifest(map[string]server.PageEntry{})
 	router := server.NewRouter(m)
-	router.NotFound(echoPage("not found page"), func(ctx context.Context, r *http.Request) (any, error) {
+	router.NotFound(echoPage("not found page"), func(ctx *server.RequestCtx) (any, error) {
 		return nil, nil
 	})
 
@@ -128,7 +128,7 @@ type titledData struct{ name string }
 
 func (d titledData) Title() string { return d.name }
 
-func titledResolver(ctx context.Context, r *http.Request) (any, error) {
+func titledResolver(ctx *server.RequestCtx) (any, error) {
 	return titledData{name: "Widget Pro"}, nil
 }
 
