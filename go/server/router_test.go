@@ -288,6 +288,75 @@ func TestRouter_ISR_CacheMiss(t *testing.T) {
 	}
 }
 
+func TestRouter_Revalidate_NoSecret_LocalhostAllowed(t *testing.T) {
+	t.Setenv("REGOX_REVALIDATE_SECRET", "")
+	m := makeManifest(map[string]server.PageEntry{})
+	r := server.NewRouter(m)
+
+	body := `{"paths":["/product/1"]}`
+	req := httptest.NewRequest("POST", "/internal/revalidate", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.RemoteAddr = "127.0.0.1:12345"
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Errorf("expected 204, got %d", w.Code)
+	}
+}
+
+func TestRouter_Revalidate_NoSecret_NonLocalhostForbidden(t *testing.T) {
+	t.Setenv("REGOX_REVALIDATE_SECRET", "")
+	m := makeManifest(map[string]server.PageEntry{})
+	r := server.NewRouter(m)
+
+	body := `{"paths":["/product/1"]}`
+	req := httptest.NewRequest("POST", "/internal/revalidate", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.RemoteAddr = "203.0.113.1:12345"
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403, got %d", w.Code)
+	}
+}
+
+func TestRouter_Revalidate_WithSecret_ValidToken(t *testing.T) {
+	t.Setenv("REGOX_REVALIDATE_SECRET", "mysecret")
+	m := makeManifest(map[string]server.PageEntry{})
+	r := server.NewRouter(m)
+
+	body := `{"tags":["product"]}`
+	req := httptest.NewRequest("POST", "/internal/revalidate", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer mysecret")
+	req.RemoteAddr = "203.0.113.1:12345"
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Errorf("expected 204, got %d", w.Code)
+	}
+}
+
+func TestRouter_Revalidate_WithSecret_InvalidToken(t *testing.T) {
+	t.Setenv("REGOX_REVALIDATE_SECRET", "mysecret")
+	m := makeManifest(map[string]server.PageEntry{})
+	r := server.NewRouter(m)
+
+	body := `{"tags":["product"]}`
+	req := httptest.NewRequest("POST", "/internal/revalidate", strings.NewReader(body))
+	req.Header.Set("Authorization", "Bearer wrongsecret")
+	req.RemoteAddr = "203.0.113.1:12345"
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401, got %d", w.Code)
+	}
+}
+
 func TestRouter_ISR_TagsStoredOnCacheMiss(t *testing.T) {
 	m := makeManifest(map[string]server.PageEntry{
 		"/shop": {Mode: "isr", Revalidate: 60},

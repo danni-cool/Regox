@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
@@ -47,11 +49,55 @@ type Router struct {
 }
 
 func NewRouter(manifest *Manifest) *Router {
-	return &Router{
+	r := &Router{
 		mux:      http.NewServeMux(),
 		manifest: manifest,
 		isr:      NewISRCache(),
 	}
+	r.mux.HandleFunc("POST /internal/revalidate", r.handleRevalidate)
+	return r
+}
+
+type revalidateRequest struct {
+	Paths []string `json:"paths,omitempty"`
+	Tags  []string `json:"tags,omitempty"`
+}
+
+func (r *Router) handleRevalidate(w http.ResponseWriter, req *http.Request) {
+	secret := os.Getenv("REGOX_REVALIDATE_SECRET")
+	if secret != "" {
+		auth := req.Header.Get("Authorization")
+		if auth != "Bearer "+secret {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+	} else {
+		if !isLoopback(req.RemoteAddr) {
+			http.Error(w, "forbidden: set REGOX_REVALIDATE_SECRET for remote access", http.StatusForbidden)
+			return
+		}
+	}
+	var body revalidateRequest
+	if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	if len(body.Paths) > 0 {
+		r.isr.InvalidateByPath(body.Paths...)
+	}
+	if len(body.Tags) > 0 {
+		r.isr.InvalidateByTag(body.Tags...)
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func isLoopback(addr string) bool {
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return false
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 // islandScripts returns all <script> tags needed for SSR island hydration:
